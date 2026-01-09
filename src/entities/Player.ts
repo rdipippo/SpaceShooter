@@ -20,6 +20,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     d: Phaser.Input.Keyboard.Key;
   };
   private isInvulnerable: boolean = false;
+  private touchTarget: Phaser.Math.Vector2 | null = null;
+  private touchActive: boolean = false;
+  private touchStartPosition: Phaser.Math.Vector2 | null = null;
+  private touchStartTime: number = 0;
+  private isDragging: boolean = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'player');
@@ -35,6 +40,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Set up physics body
     this.setCollideWorldBounds(true);
+    
+    // Set custom body size to match actual sprite (smaller than bounding box)
+    // Assuming player sprite is roughly 32x32, use a smaller circular body
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    body.setCircle(12); // Adjust radius based on actual sprite size
 
     // Set up input
     this.setupInput();
@@ -57,6 +67,72 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         d: this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
       };
     }
+
+    // Set up touch controls for mobile
+    this.setupTouchControls();
+  }
+
+  private setupTouchControls(): void {
+    // Make the entire scene interactive for touch
+    this.scene.input.addPointer(3); // Support up to 3 touch points
+
+    // Handle touch start
+    this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.touchStartPosition = new Phaser.Math.Vector2(pointer.x, pointer.y);
+      this.touchTarget = new Phaser.Math.Vector2(pointer.x, pointer.y);
+      this.touchActive = true;
+      this.isDragging = false;
+      this.touchStartTime = this.scene.time.now;
+    });
+
+    // Handle touch move - update target position for dragging
+    this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.isDown && this.touchStartPosition) {
+        const moveDistance = Phaser.Math.Distance.Between(
+          this.touchStartPosition.x,
+          this.touchStartPosition.y,
+          pointer.x,
+          pointer.y
+        );
+
+        // If moved more than 10 pixels, consider it a drag
+        if (moveDistance > 10) {
+          this.isDragging = true;
+        }
+
+        this.touchTarget = new Phaser.Math.Vector2(pointer.x, pointer.y);
+        this.touchActive = true;
+      }
+    });
+
+    // Handle touch end - check if it was a tap (shoot) or drag (move)
+    this.scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (this.touchStartPosition && !this.isDragging) {
+        // It was a tap - trigger shooting
+        const currentTime = this.scene.time.now;
+        const tapDuration = currentTime - this.touchStartTime;
+        const tapDistance = Phaser.Math.Distance.Between(
+          this.touchStartPosition.x,
+          this.touchStartPosition.y,
+          pointer.x,
+          pointer.y
+        );
+
+        // Consider it a tap if it was quick (< 200ms) and didn't move much (< 20px)
+        if (tapDuration < 200 && tapDistance < 20) {
+          // Trigger shoot if fire rate allows
+          if (currentTime > this.lastFired + this.fireRate) {
+            this.shoot();
+            this.lastFired = currentTime;
+          }
+        }
+      }
+
+      this.touchActive = false;
+      this.touchTarget = null;
+      this.touchStartPosition = null;
+      this.isDragging = false;
+    });
   }
 
   private createBulletGroup(): void {
@@ -76,6 +152,34 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Reset velocity
     this.setVelocity(0);
 
+    // Check for touch input first (mobile)
+    if (this.touchActive && this.touchTarget) {
+      const distance = Phaser.Math.Distance.Between(
+        this.x,
+        this.y,
+        this.touchTarget.x,
+        this.touchTarget.y
+      );
+
+      // Only move if touch is far enough from current position (dead zone)
+      if (distance > 10) {
+        const angle = Phaser.Math.Angle.Between(
+          this.x,
+          this.y,
+          this.touchTarget.x,
+          this.touchTarget.y
+        );
+
+        // Move towards touch position
+        this.setVelocity(
+          Math.cos(angle) * this.speed,
+          Math.sin(angle) * this.speed
+        );
+      }
+      return; // Touch input takes priority
+    }
+
+    // Keyboard movement (desktop)
     // Horizontal movement
     if (this.keys.left.isDown || this.keys.a.isDown) {
       this.setVelocityX(-this.speed);
@@ -92,10 +196,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private handleShooting(time: number): void {
-    if (this.keys.space.isDown && time > this.lastFired + this.fireRate) {
+    // Check keyboard input (desktop)
+    if (this.keys && this.keys.space.isDown && time > this.lastFired + this.fireRate) {
       this.shoot();
       this.lastFired = time;
     }
+    
+    // Check touch input for continuous shooting (hold without dragging)
+    if (this.touchActive && this.touchStartPosition && !this.isDragging) {
+      const holdDuration = time - this.touchStartTime;
+      // After holding for 300ms, start continuous shooting
+      if (holdDuration > 300 && time > this.lastFired + this.fireRate) {
+        this.shoot();
+        this.lastFired = time;
+      }
+    }
+    // Quick tap shooting is handled in pointerup event
   }
 
   private shoot(): void {
@@ -145,3 +261,4 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.bullets;
   }
 }
+

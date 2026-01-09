@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS } from '../utils/Constants';
+import { COLORS, ASTEROID_CONFIG } from '../utils/Constants';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -50,6 +50,59 @@ export class PreloadScene extends Phaser.Scene {
     starGraphics.generateTexture('star', 2, 2);
     starGraphics.destroy();
 
+    // Create asteroid textures for all sizes
+    this.createAsteroidTexture('small', ASTEROID_CONFIG.SMALL.RADIUS);
+    this.createAsteroidTexture('medium', ASTEROID_CONFIG.MEDIUM.RADIUS);
+    this.createAsteroidTexture('large', ASTEROID_CONFIG.LARGE.RADIUS);
+
+    // Create asteroid particle
+    const particleGraphics = this.add.graphics();
+    particleGraphics.fillStyle(COLORS.ASTEROID);
+    particleGraphics.fillCircle(4, 4, 4);
+    particleGraphics.generateTexture('asteroid_particle', 8, 8);
+    particleGraphics.destroy();
+
     this.scene.start('MainMenuScene');
+  }
+
+  private createAsteroidTexture(size: string, radius: number): void {
+    const graphics = this.add.graphics();
+    const diameter = radius * 2;
+    const centerX = radius;
+    const centerY = radius;
+
+    // Draw irregular asteroid shape
+    graphics.fillStyle(COLORS.ASTEROID);
+    graphics.beginPath();
+
+    const points = 8;
+    for (let i = 0; i < points; i++) {
+      const angle = (i / points) * Math.PI * 2;
+      const variance = Phaser.Math.FloatBetween(0.7, 1.0);
+      const px = centerX + Math.cos(angle) * radius * variance;
+      const py = centerY + Math.sin(angle) * radius * variance;
+
+      if (i === 0) {
+        graphics.moveTo(px, py);
+      } else {
+        graphics.lineTo(px, py);
+      }
+    }
+
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Add some crater details
+    graphics.fillStyle(0x5a4a3a);
+    const craterCount = Math.floor(radius / 10);
+    for (let i = 0; i < craterCount; i++) {
+      const craterX = centerX + Phaser.Math.Between(-radius * 0.5, radius * 0.5);
+      const craterY = centerY + Phaser.Math.Between(-radius * 0.5, radius * 0.5);
+      const craterRadius = Phaser.Math.Between(2, Math.max(3, radius * 0.15));
+      graphics.fillCircle(craterX, craterY, craterRadius);
+    }
+
+    graphics.generateTexture(`asteroid_${size}`, diameter, diameter);
+    graphics.destroy();
   }
 }

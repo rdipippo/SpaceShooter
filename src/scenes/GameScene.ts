@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Player } from '../entities/Player';
 import { EnemySpawner } from '../systems/EnemySpawner';
+import { AsteroidSpawner } from '../systems/AsteroidSpawner';
 import { CollisionManager } from '../systems/CollisionManager';
 import { ScoreManager } from '../systems/ScoreManager';
 import { HUD } from '../ui/HUD';
@@ -8,7 +9,9 @@ import { HUD } from '../ui/HUD';
 export class GameScene extends Phaser.Scene {
   private player!: Player;
   private enemySpawner!: EnemySpawner;
+  private asteroidSpawner!: AsteroidSpawner;
   private scoreManager!: ScoreManager;
+  private collisionManager!: CollisionManager;
   private hud!: HUD;
   private gameOver: boolean = false;
   private stars: Phaser.GameObjects.TileSprite | null = null;
@@ -21,6 +24,11 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     this.gameOver = false;
     this.paused = false;
+
+    // Remove any existing event listeners to prevent duplicates on restart
+    this.events.off('enemyDestroyed', this.handleEnemyDestroyed, this);
+    this.events.off('asteroidDestroyed', this.handleAsteroidDestroyed, this);
+    this.events.off('playerDied', this.handlePlayerDied, this);
 
     // Set up Enter key for pause/resume
     if (this.input.keyboard) {
@@ -56,8 +64,11 @@ export class GameScene extends Phaser.Scene {
     // Create enemy spawner
     this.enemySpawner = new EnemySpawner(this);
 
+    // Create asteroid spawner
+    this.asteroidSpawner = new AsteroidSpawner(this);
+
     // Set up collision manager
-    new CollisionManager(this, this.player, this.enemySpawner);
+    this.collisionManager = new CollisionManager(this, this.player, this.enemySpawner, this.asteroidSpawner);
 
     // Create HUD
     this.hud = new HUD(this);
@@ -67,6 +78,7 @@ export class GameScene extends Phaser.Scene {
 
     // Set up event listeners
     this.events.on('enemyDestroyed', this.handleEnemyDestroyed, this);
+    this.events.on('asteroidDestroyed', this.handleAsteroidDestroyed, this);
     this.events.on('playerDied', this.handlePlayerDied, this);
   }
 
@@ -86,6 +98,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleEnemyDestroyed(scoreValue: number): void {
+    this.addScoreAndCheckDifficulty(scoreValue);
+  }
+
+  private handleAsteroidDestroyed(scoreValue: number): void {
+    this.addScoreAndCheckDifficulty(scoreValue);
+  }
+
+  private addScoreAndCheckDifficulty(scoreValue: number): void {
     this.scoreManager.addScore(scoreValue);
     this.hud.updateScore(this.scoreManager.getCurrentScore());
     this.hud.updateHighScore(this.scoreManager.getHighScore());
@@ -93,6 +113,7 @@ export class GameScene extends Phaser.Scene {
     // Increase difficulty every 100 points
     if (this.scoreManager.getCurrentScore() % 100 === 0) {
       this.enemySpawner.increaseDifficulty();
+      this.asteroidSpawner.increaseDifficulty();
     }
   }
 
@@ -101,6 +122,7 @@ export class GameScene extends Phaser.Scene {
 
     this.gameOver = true;
     this.enemySpawner.stopSpawning();
+    this.asteroidSpawner.stopSpawning();
 
     // Transition to game over scene after a brief delay
     this.time.delayedCall(1000, () => {
@@ -141,6 +163,7 @@ export class GameScene extends Phaser.Scene {
   shutdown(): void {
     // Clean up event listeners
     this.events.off('enemyDestroyed', this.handleEnemyDestroyed, this);
+    this.events.off('asteroidDestroyed', this.handleAsteroidDestroyed, this);
     this.events.off('playerDied', this.handlePlayerDied, this);
   }
 }

@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "install": "npm run build && rm -rf /var/www/html/dist && cp -r dist /var/www/html/dist",
     "cap:init": "npx cap init",
     "cap:add:ios": "npx cap add ios",
     "cap:add:android": "npx cap add android",

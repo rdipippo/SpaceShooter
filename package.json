@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "install-remote": "npm run build && ssh root@192.175.23.17 -t rm -rf /var/www/html && scp -r dist root@192.175.23.17:/var/www/html",
     "install": "npm run build && rm -rf /var/www/html/dist && cp -r dist /var/www/html/dist",
     "cap:init": "npx cap init",
     "cap:add:ios": "npx cap add ios",

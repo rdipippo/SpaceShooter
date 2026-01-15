@@ -157,8 +157,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Reset velocity
     this.setVelocity(0);
 
-    // Check for touch input first (mobile)
-    if (this.touchActive && this.touchTarget) {
+    // Check for touch input first (mobile) - only move if dragging, not tapping
+    if (this.touchActive && this.touchTarget && this.isDragging) {
       const distance = Phaser.Math.Distance.Between(
         this.x,
         this.y,

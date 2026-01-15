@@ -78,8 +78,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Handle touch start
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      this.touchStartPosition = new Phaser.Math.Vector2(pointer.x, pointer.y);
-      this.touchTarget = new Phaser.Math.Vector2(pointer.x, pointer.y);
+      // Use world coordinates to match player's coordinate system
+      this.touchStartPosition = new Phaser.Math.Vector2(pointer.worldX, pointer.worldY);
+      this.touchTarget = new Phaser.Math.Vector2(pointer.worldX, pointer.worldY);
       this.touchActive = true;
       this.isDragging = false;
       this.touchStartTime = this.scene.time.now;
@@ -88,11 +89,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Handle touch move - update target position for dragging
     this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (pointer.isDown && this.touchStartPosition) {
+        // Use world coordinates for consistent movement
         const moveDistance = Phaser.Math.Distance.Between(
           this.touchStartPosition.x,
           this.touchStartPosition.y,
-          pointer.x,
-          pointer.y
+          pointer.worldX,
+          pointer.worldY
         );
 
         // If moved more than 10 pixels, consider it a drag
@@ -100,7 +102,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.isDragging = true;
         }
 
-        this.touchTarget = new Phaser.Math.Vector2(pointer.x, pointer.y);
+        this.touchTarget = new Phaser.Math.Vector2(pointer.worldX, pointer.worldY);
         this.touchActive = true;
       }
     });
@@ -111,11 +113,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // It was a tap - trigger shooting
         const currentTime = this.scene.time.now;
         const tapDuration = currentTime - this.touchStartTime;
+        // Use world coordinates for consistent distance calculation
         const tapDistance = Phaser.Math.Distance.Between(
           this.touchStartPosition.x,
           this.touchStartPosition.y,
-          pointer.x,
-          pointer.y
+          pointer.worldX,
+          pointer.worldY
         );
 
         // Consider it a tap if it was quick (< 200ms) and didn't move much (< 20px)
@@ -128,10 +131,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
       }
 
+      // Immediately stop movement when touch ends
       this.touchActive = false;
       this.touchTarget = null;
       this.touchStartPosition = null;
       this.isDragging = false;
+      this.setVelocity(0);
     });
   }
 

@@ -16,9 +16,17 @@ export class ShieldPowerUp extends Phaser.Physics.Arcade.Sprite {
   }
 
   spawn(x: number, y: number): void {
+    this.setTexture('shield_powerup');
     this.setPosition(x, y);
     this.setActive(true);
     this.setVisible(true);
+
+    // Ensure physics body is enabled when reused from pool
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (body) {
+      body.enable = true;
+    }
+
     this.setVelocityY(this.speed);
   }
 
@@ -38,6 +46,12 @@ export class ShieldPowerUp extends Phaser.Physics.Arcade.Sprite {
 
     this.setActive(false);
     this.setVisible(false);
+
+    // Disable physics body when collected
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (body) {
+      body.enable = false;
+    }
   }
 
   private createCollectionEffect(): void {

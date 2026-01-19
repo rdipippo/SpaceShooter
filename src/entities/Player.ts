@@ -25,7 +25,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private touchStartTime: number = 0;
   private isDragging: boolean = false;
   private shipStartPosition: Phaser.Math.Vector2 | null = null;
-  private static readonly TOUCH_DRAG_MULTIPLIER = 3;
+  private static readonly TOUCH_DRAG_MULTIPLIER = 2.5;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'player');

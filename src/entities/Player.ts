@@ -20,11 +20,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     d: Phaser.Input.Keyboard.Key;
   };
   private isInvulnerable: boolean = false;
-  private touchTarget: Phaser.Math.Vector2 | null = null;
   private touchActive: boolean = false;
   private touchStartPosition: Phaser.Math.Vector2 | null = null;
   private touchStartTime: number = 0;
   private isDragging: boolean = false;
+  private touchOffset: Phaser.Math.Vector2 | null = null;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'player');
@@ -80,18 +80,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Handle touch start
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      // Use world coordinates to match player's coordinate system
       this.touchStartPosition = new Phaser.Math.Vector2(pointer.worldX, pointer.worldY);
-      this.touchTarget = new Phaser.Math.Vector2(pointer.worldX, pointer.worldY);
+      // Store offset between touch and ship position for direct drag control
+      this.touchOffset = new Phaser.Math.Vector2(this.x - pointer.worldX, this.y - pointer.worldY);
       this.touchActive = true;
       this.isDragging = false;
       this.touchStartTime = this.scene.time.now;
     });
 
-    // Handle touch move - update target position for dragging
+    // Handle touch move - ship follows finger directly
     this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.isDown && this.touchStartPosition) {
-        // Use world coordinates for consistent movement
+      if (pointer.isDown && this.touchStartPosition && this.touchOffset) {
         const moveDistance = Phaser.Math.Distance.Between(
           this.touchStartPosition.x,
           this.touchStartPosition.y,
@@ -104,8 +103,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.isDragging = true;
         }
 
-        this.touchTarget = new Phaser.Math.Vector2(pointer.worldX, pointer.worldY);
-        this.touchActive = true;
+        if (this.isDragging) {
+          // Move ship to follow finger (maintaining initial offset)
+          const targetX = pointer.worldX + this.touchOffset.x;
+          const targetY = pointer.worldY + this.touchOffset.y;
+
+          // Clamp to world bounds
+          const halfWidth = this.width / 2;
+          const halfHeight = this.height / 2;
+          const clampedX = Phaser.Math.Clamp(targetX, halfWidth, this.scene.cameras.main.width - halfWidth);
+          const clampedY = Phaser.Math.Clamp(targetY, halfHeight, this.scene.cameras.main.height - halfHeight);
+
+          this.setPosition(clampedX, clampedY);
+        }
       }
     });
 
@@ -115,7 +125,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // It was a tap - trigger shooting
         const currentTime = this.scene.time.now;
         const tapDuration = currentTime - this.touchStartTime;
-        // Use world coordinates for consistent distance calculation
         const tapDistance = Phaser.Math.Distance.Between(
           this.touchStartPosition.x,
           this.touchStartPosition.y,
@@ -125,7 +134,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Consider it a tap if it was quick (< 200ms) and didn't move much (< 20px)
         if (tapDuration < 200 && tapDistance < 20) {
-          // Trigger shoot if fire rate allows
           if (currentTime > this.lastFired + this.fireRate) {
             this.shoot();
             this.lastFired = currentTime;
@@ -133,12 +141,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
       }
 
-      // Immediately stop movement when touch ends
       this.touchActive = false;
-      this.touchTarget = null;
       this.touchStartPosition = null;
+      this.touchOffset = null;
       this.isDragging = false;
-      this.setVelocity(0);
     });
   }
 
@@ -156,34 +162,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private handleMovement(): void {
-    // Reset velocity
+    // Reset velocity for keyboard movement
     this.setVelocity(0);
 
-    // Check for touch input first (mobile) - only move if dragging, not tapping
-    if (this.touchActive && this.touchTarget && this.isDragging) {
-      const distance = Phaser.Math.Distance.Between(
-        this.x,
-        this.y,
-        this.touchTarget.x,
-        this.touchTarget.y
-      );
-
-      // Only move if touch is far enough from current position (dead zone)
-      if (distance > 10) {
-        const angle = Phaser.Math.Angle.Between(
-          this.x,
-          this.y,
-          this.touchTarget.x,
-          this.touchTarget.y
-        );
-
-        // Move towards touch position
-        this.setVelocity(
-          Math.cos(angle) * this.speed,
-          Math.sin(angle) * this.speed
-        );
-      }
-      return; // Touch input takes priority
+    // Touch movement is handled directly in pointermove event
+    // Skip keyboard handling if touch is active
+    if (this.touchActive && this.isDragging) {
+      return;
     }
 
     // Keyboard movement (desktop)

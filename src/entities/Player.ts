@@ -24,7 +24,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private touchStartPosition: Phaser.Math.Vector2 | null = null;
   private touchStartTime: number = 0;
   private isDragging: boolean = false;
-  private touchOffset: Phaser.Math.Vector2 | null = null;
+  private shipStartPosition: Phaser.Math.Vector2 | null = null;
+  private static readonly TOUCH_DRAG_MULTIPLIER = 2;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'player');
@@ -81,16 +82,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Handle touch start
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       this.touchStartPosition = new Phaser.Math.Vector2(pointer.worldX, pointer.worldY);
-      // Store offset between touch and ship position for direct drag control
-      this.touchOffset = new Phaser.Math.Vector2(this.x - pointer.worldX, this.y - pointer.worldY);
+      this.shipStartPosition = new Phaser.Math.Vector2(this.x, this.y);
       this.touchActive = true;
       this.isDragging = false;
       this.touchStartTime = this.scene.time.now;
     });
 
-    // Handle touch move - ship follows finger directly
+    // Handle touch move - ship follows finger with 2x multiplier
     this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.isDown && this.touchStartPosition && this.touchOffset) {
+      if (pointer.isDown && this.touchStartPosition && this.shipStartPosition) {
         const moveDistance = Phaser.Math.Distance.Between(
           this.touchStartPosition.x,
           this.touchStartPosition.y,
@@ -104,9 +104,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         if (this.isDragging) {
-          // Move ship to follow finger (maintaining initial offset)
-          const targetX = pointer.worldX + this.touchOffset.x;
-          const targetY = pointer.worldY + this.touchOffset.y;
+          // Calculate finger movement delta and apply multiplier
+          const deltaX = (pointer.worldX - this.touchStartPosition.x) * Player.TOUCH_DRAG_MULTIPLIER;
+          const deltaY = (pointer.worldY - this.touchStartPosition.y) * Player.TOUCH_DRAG_MULTIPLIER;
+
+          const targetX = this.shipStartPosition.x + deltaX;
+          const targetY = this.shipStartPosition.y + deltaY;
 
           // Clamp to world bounds
           const halfWidth = this.width / 2;
@@ -143,7 +146,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
       this.touchActive = false;
       this.touchStartPosition = null;
-      this.touchOffset = null;
+      this.shipStartPosition = null;
       this.isDragging = false;
     });
   }

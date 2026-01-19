@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { Player } from '../entities/Player';
 import { EnemySpawner } from '../systems/EnemySpawner';
 import { AsteroidSpawner } from '../systems/AsteroidSpawner';
+import { ShieldPowerUpSpawner } from '../systems/ShieldPowerUpSpawner';
 import { CollisionManager } from '../systems/CollisionManager';
 import { ScoreManager } from '../systems/ScoreManager';
 import { HUD } from '../ui/HUD';
@@ -10,6 +11,7 @@ export class GameScene extends Phaser.Scene {
   private player!: Player;
   private enemySpawner!: EnemySpawner;
   private asteroidSpawner!: AsteroidSpawner;
+  private shieldPowerUpSpawner!: ShieldPowerUpSpawner;
   private scoreManager!: ScoreManager;
   private collisionManager!: CollisionManager;
   private hud!: HUD;
@@ -67,8 +69,11 @@ export class GameScene extends Phaser.Scene {
     // Create asteroid spawner
     this.asteroidSpawner = new AsteroidSpawner(this);
 
+    // Create shield power-up spawner
+    this.shieldPowerUpSpawner = new ShieldPowerUpSpawner(this);
+
     // Set up collision manager
-    this.collisionManager = new CollisionManager(this, this.player, this.enemySpawner, this.asteroidSpawner);
+    this.collisionManager = new CollisionManager(this, this.player, this.enemySpawner, this.asteroidSpawner, this.shieldPowerUpSpawner);
 
     // Create HUD
     this.hud = new HUD(this);
@@ -114,6 +119,8 @@ export class GameScene extends Phaser.Scene {
     if (this.scoreManager.getCurrentScore() % 100 === 0) {
       this.enemySpawner.increaseDifficulty();
       this.asteroidSpawner.increaseDifficulty();
+      // Keep power-up spawn rate at 10% of enemy rate
+      this.shieldPowerUpSpawner.updateSpawnRate(this.enemySpawner.getSpawnDelay());
     }
   }
 
@@ -123,6 +130,7 @@ export class GameScene extends Phaser.Scene {
     this.gameOver = true;
     this.enemySpawner.stopSpawning();
     this.asteroidSpawner.stopSpawning();
+    this.shieldPowerUpSpawner.stopSpawning();
 
     // Transition to game over scene after a brief delay
     this.time.delayedCall(1000, () => {

@@ -3,20 +3,30 @@ import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
 import { Bullet } from '../entities/Bullet';
 import { Asteroid } from '../entities/Asteroid';
+import { ShieldPowerUp } from '../entities/ShieldPowerUp';
 import { EnemySpawner } from './EnemySpawner';
 import { AsteroidSpawner } from './AsteroidSpawner';
+import { ShieldPowerUpSpawner } from './ShieldPowerUpSpawner';
 
 export class CollisionManager {
   private scene: Phaser.Scene;
   private player: Player;
   private enemySpawner: EnemySpawner;
   private asteroidSpawner?: AsteroidSpawner;
+  private shieldPowerUpSpawner?: ShieldPowerUpSpawner;
 
-  constructor(scene: Phaser.Scene, player: Player, enemySpawner: EnemySpawner, asteroidSpawner?: AsteroidSpawner) {
+  constructor(
+    scene: Phaser.Scene,
+    player: Player,
+    enemySpawner: EnemySpawner,
+    asteroidSpawner?: AsteroidSpawner,
+    shieldPowerUpSpawner?: ShieldPowerUpSpawner
+  ) {
     this.scene = scene;
     this.player = player;
     this.enemySpawner = enemySpawner;
     this.asteroidSpawner = asteroidSpawner;
+    this.shieldPowerUpSpawner = shieldPowerUpSpawner;
 
     this.setupCollisions();
   }
@@ -56,6 +66,17 @@ export class CollisionManager {
         this.player,
         this.asteroidSpawner.getAsteroids(),
         this.playerAsteroidCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+        undefined,
+        this
+      );
+    }
+
+    // Set up shield power-up collisions if spawner exists
+    if (this.shieldPowerUpSpawner) {
+      this.scene.physics.add.overlap(
+        this.player,
+        this.shieldPowerUpSpawner.getPowerUps(),
+        this.playerPowerUpCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
         undefined,
         this
       );
@@ -136,5 +157,24 @@ export class CollisionManager {
 
     // Destroy asteroid
     asteroid.takeDamage(999);
+  }
+
+  private playerPowerUpCollision(
+    playerObj: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile,
+    powerUpObj: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile
+  ): void {
+    const player = playerObj as Player;
+    const powerUp = powerUpObj as ShieldPowerUp;
+
+    if (!player.active || !powerUp.active) return;
+
+    // Heal player
+    player.heal(powerUp.healAmount);
+
+    // Collect power-up (triggers effect and deactivates)
+    powerUp.collect();
+
+    // Emit event for UI feedback
+    this.scene.events.emit('shieldCollected');
   }
 }

@@ -52,13 +52,20 @@ export const ASTEROID_CONFIG = {
   BOUNCE: 0.8  // elasticity when bouncing off walls
 };
 
+export const SHIELD_POWERUP_CONFIG = {
+  HEAL_AMOUNT: 1,
+  SPEED: 80,
+  SPAWN_RATE_MULTIPLIER: 10  // Spawns at 10% of enemy rate (10x slower)
+};
+
 export const COLORS = {
   PLAYER: 0x00ff00,
   ENEMY_BASIC: 0xff0000,
   BULLET: 0xffff00,
   STAR: 0xffffff,
   EXPLOSION: 0xff8800,
-  ASTEROID: 0x8b7355
+  ASTEROID: 0x8b7355,
+  SHIELD_POWERUP: 0x00ffff
 };
 
 export const UI_CONFIG = {

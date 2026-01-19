@@ -262,6 +262,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.health;
   }
 
+  heal(amount: number): void {
+    this.health = Math.min(this.health + amount, PLAYER_CONFIG.MAX_HEALTH);
+  }
+
   getBullets(): Phaser.Physics.Arcade.Group {
     return this.bullets;
   }

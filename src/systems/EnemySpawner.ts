@@ -75,4 +75,8 @@ export class EnemySpawner {
   getEnemies(): Phaser.Physics.Arcade.Group {
     return this.enemies;
   }
+
+  getSpawnDelay(): number {
+    return this.spawnDelay;
+  }
 }

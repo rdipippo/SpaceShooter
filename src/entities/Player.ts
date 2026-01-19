@@ -40,11 +40,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Set up physics body
     this.setCollideWorldBounds(true);
-    
+
     // Set custom body size to match actual sprite (smaller than bounding box)
-    // Assuming player sprite is roughly 32x32, use a smaller circular body
+    // Using a circular body centered on the sprite
     const body = this.body as Phaser.Physics.Arcade.Body;
-    body.setCircle(12); // Adjust radius based on actual sprite size
+    const radius = 12;
+    // Offset the circle to center it on the sprite (assuming ~32x32 sprite)
+    body.setCircle(radius, this.width / 2 - radius, this.height / 2 - radius);
 
     // Set up input
     this.setupInput();

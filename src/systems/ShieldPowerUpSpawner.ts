@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ShieldPowerUp } from '../entities/ShieldPowerUp';
 import { ENEMY_CONFIG, SHIELD_POWERUP_CONFIG } from '../utils/Constants';
+import { Enemy } from '../entities/Enemy';
 
 export class ShieldPowerUpSpawner {
   private scene: Phaser.Scene;
@@ -36,7 +37,7 @@ export class ShieldPowerUpSpawner {
     });
   }
   
-  private handleEnemyDeath(enemy : Enemy) {
+  private handleDeadEnemy(enemy : Enemy) {
       spawnPowerUp(enemy.x, enemy.y); 
   }
 

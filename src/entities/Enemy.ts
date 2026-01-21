@@ -66,7 +66,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setActive(false);
     this.setVisible(false);
     
-    this.scene.events.emit('enemyDied', {});
+    this.scene.events.emit('enemyDied', this);
   }
 
   private createExplosion(): void {

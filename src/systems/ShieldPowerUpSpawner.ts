@@ -13,7 +13,7 @@ export class ShieldPowerUpSpawner {
     // Spawn at 10% of enemy rate (10x slower than enemies)
     this.spawnDelay = ENEMY_CONFIG.INITIAL_SPAWN_DELAY * SHIELD_POWERUP_CONFIG.SPAWN_RATE_MULTIPLIER;
     
-    this.scene.events.on('enemyDied', this.spawnPowerUp, this);
+    this.scene.events.on('enemyDied', this.handleDeadEnemy, this);
 
     this.initPowerUpGroup();
     this.startSpawning();
@@ -35,17 +35,25 @@ export class ShieldPowerUpSpawner {
       loop: true
     });
   }
+  
+  private handleEnemyDeath(enemy : Enemy) {
+      spawnPowerUp(enemy.x, enemy.y); 
+  }
 
+  private spawnPowerUp(x: number, y: number) {
+    const powerUp = this.powerUps.get(x, y, 'shield_powerup') as ShieldPowerUp;
+    
+    if (powerUp) {
+      powerUp.spawn(x, y);
+    }
+  }
+  -
   private spawnPowerUp(): void {
     // Random X position at top of screen
     const x = Phaser.Math.Between(30, this.scene.cameras.main.width - 30);
     const y = -30;
 
-    const powerUp = this.powerUps.get(x, y, 'shield_powerup') as ShieldPowerUp;
-
-    if (powerUp) {
-      powerUp.spawn(x, y);
-    }
+    spawnPowerUp(x, y);
   }
 
   updateSpawnRate(enemySpawnDelay: number): void {

@@ -38,7 +38,7 @@ export class ShieldPowerUpSpawner {
   }
   
   private handleDeadEnemy(enemy : Enemy) {
-      spawnPowerUp(enemy.x, enemy.y); 
+      this.spawnPowerUp(enemy.x, enemy.y); 
   }
 
   private spawnPowerUp(x: number, y: number) {
@@ -54,7 +54,7 @@ export class ShieldPowerUpSpawner {
     const x = Phaser.Math.Between(30, this.scene.cameras.main.width - 30);
     const y = -30;
 
-    spawnPowerUp(x, y);
+    this.spawnPowerUp(x, y);
   }
 
   updateSpawnRate(enemySpawnDelay: number): void {

@@ -12,6 +12,8 @@ export class ShieldPowerUpSpawner {
     this.scene = scene;
     // Spawn at 10% of enemy rate (10x slower than enemies)
     this.spawnDelay = ENEMY_CONFIG.INITIAL_SPAWN_DELAY * SHIELD_POWERUP_CONFIG.SPAWN_RATE_MULTIPLIER;
+    
+    this.scene.events.on('enemyDied', this.spawnPowerUp, this);
 
     this.initPowerUpGroup();
     this.startSpawning();

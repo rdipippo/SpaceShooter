@@ -31,7 +31,7 @@ export class ShieldPowerUpSpawner {
   private startSpawning(): void {
     this.spawnTimer = this.scene.time.addEvent({
       delay: this.spawnDelay,
-      callback: this.spawnPowerUp,
+      callback: this.spawnRandomPowerUp,
       callbackScope: this,
       loop: true
     });
@@ -49,7 +49,7 @@ export class ShieldPowerUpSpawner {
     }
   }
   
-  private spawnPowerUp(): void {
+  private spawnRandomPowerUp(): void {
     // Random X position at top of screen
     const x = Phaser.Math.Between(30, this.scene.cameras.main.width - 30);
     const y = -30;

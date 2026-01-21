@@ -57,6 +57,14 @@ export class ShieldPowerUpSpawner {
     this.spawnPowerUp(x, y);
   }
 
+  spawnSingle(): void {
+    // Spawn at center top of screen
+    const x = this.scene.cameras.main.width / 2;
+    const y = -30;
+
+    this.spawnPowerUp(x, y);
+  }
+
   updateSpawnRate(enemySpawnDelay: number): void {
     // Keep power-up spawn rate at 10% of enemy rate
     this.spawnDelay = enemySpawnDelay * SHIELD_POWERUP_CONFIG.SPAWN_RATE_MULTIPLIER;

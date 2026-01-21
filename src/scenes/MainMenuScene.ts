@@ -60,6 +60,27 @@ export class MainMenuScene extends Phaser.Scene {
       repeat: -1
     });
 
+    // Test mode button
+    const testModeButton = this.add.text(width / 2, height * 2 / 3 + 50, 'TEST MODE', {
+      fontFamily: UI_CONFIG.FONT_FAMILY,
+      fontSize: '20px',
+      color: '#ff9900'
+    });
+    testModeButton.setOrigin(0.5);
+    testModeButton.setInteractive({ useHandCursor: true });
+
+    testModeButton.on('pointerover', () => {
+      testModeButton.setColor('#ffcc00');
+    });
+
+    testModeButton.on('pointerout', () => {
+      testModeButton.setColor('#ff9900');
+    });
+
+    testModeButton.on('pointerdown', () => {
+      this.scene.start('GameScene', { testMode: true });
+    });
+
     // Controls text
     const controlsText = this.add.text(
       width / 2,

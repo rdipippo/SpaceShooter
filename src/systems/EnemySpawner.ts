@@ -47,6 +47,18 @@ export class EnemySpawner {
     }
   }
 
+  spawnSingle(): void {
+    // Spawn at center top of screen
+    const x = this.scene.cameras.main.width / 2;
+    const y = -30;
+
+    const enemy = this.enemies.get(x, y, 'enemy_basic') as Enemy;
+
+    if (enemy) {
+      enemy.spawn(x, y);
+    }
+  }
+
   increaseDifficulty(): void {
     // Reduce spawn delay
     if (this.spawnDelay > this.minSpawnDelay) {

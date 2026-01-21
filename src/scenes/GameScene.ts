@@ -18,9 +18,14 @@ export class GameScene extends Phaser.Scene {
   private gameOver: boolean = false;
   private stars: Phaser.GameObjects.TileSprite | null = null;
   private paused: boolean = false;
+  private testMode: boolean = false;
 
   constructor() {
     super({ key: 'GameScene' });
+  }
+
+  init(data: { testMode?: boolean }): void {
+    this.testMode = data.testMode || false;
   }
 
   create(): void {
@@ -85,6 +90,88 @@ export class GameScene extends Phaser.Scene {
     this.events.on('enemyDestroyed', this.handleEnemyDestroyed, this);
     this.events.on('asteroidDestroyed', this.handleAsteroidDestroyed, this);
     this.events.on('playerDied', this.handlePlayerDied, this);
+
+    // Test mode setup
+    if (this.testMode) {
+      this.enemySpawner.stopSpawning();
+      this.asteroidSpawner.stopSpawning();
+      this.shieldPowerUpSpawner.stopSpawning();
+      this.createTestModeUI();
+    }
+  }
+
+  private createTestModeUI(): void {
+    const buttonStyle = {
+      fontFamily: 'Arial',
+      fontSize: '14px',
+      color: '#ffffff',
+      backgroundColor: '#333333',
+      padding: { x: 10, y: 8 }
+    };
+
+    const buttonX = 70;
+    let buttonY = 120;
+    const buttonSpacing = 50;
+
+    // Test mode label
+    const label = this.add.text(10, 80, 'TEST MODE', {
+      fontFamily: 'Arial',
+      fontSize: '16px',
+      color: '#ff9900'
+    });
+    label.setDepth(100);
+
+    // Asteroid button
+    const asteroidBtn = this.add.text(buttonX, buttonY, 'Asteroid', buttonStyle);
+    asteroidBtn.setOrigin(0.5);
+    asteroidBtn.setInteractive({ useHandCursor: true });
+    asteroidBtn.setDepth(100);
+    asteroidBtn.on('pointerover', () => asteroidBtn.setStyle({ backgroundColor: '#555555' }));
+    asteroidBtn.on('pointerout', () => asteroidBtn.setStyle({ backgroundColor: '#333333' }));
+    asteroidBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      this.spawnTestAsteroid();
+    });
+
+    buttonY += buttonSpacing;
+
+    // Enemy button
+    const enemyBtn = this.add.text(buttonX, buttonY, 'Enemy', buttonStyle);
+    enemyBtn.setOrigin(0.5);
+    enemyBtn.setInteractive({ useHandCursor: true });
+    enemyBtn.setDepth(100);
+    enemyBtn.on('pointerover', () => enemyBtn.setStyle({ backgroundColor: '#555555' }));
+    enemyBtn.on('pointerout', () => enemyBtn.setStyle({ backgroundColor: '#333333' }));
+    enemyBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      this.spawnTestEnemy();
+    });
+
+    buttonY += buttonSpacing;
+
+    // Shield button
+    const shieldBtn = this.add.text(buttonX, buttonY, 'Shield', buttonStyle);
+    shieldBtn.setOrigin(0.5);
+    shieldBtn.setInteractive({ useHandCursor: true });
+    shieldBtn.setDepth(100);
+    shieldBtn.on('pointerover', () => shieldBtn.setStyle({ backgroundColor: '#555555' }));
+    shieldBtn.on('pointerout', () => shieldBtn.setStyle({ backgroundColor: '#333333' }));
+    shieldBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      this.spawnTestShield();
+    });
+  }
+
+  private spawnTestAsteroid(): void {
+    this.asteroidSpawner.spawnSingle();
+  }
+
+  private spawnTestEnemy(): void {
+    this.enemySpawner.spawnSingle();
+  }
+
+  private spawnTestShield(): void {
+    this.shieldPowerUpSpawner.spawnSingle();
   }
 
   update(time: number): void {

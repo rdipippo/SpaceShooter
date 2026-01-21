@@ -81,6 +81,29 @@ export class AsteroidSpawner {
     }
   }
 
+  spawnSingle(): void {
+    // Random size for manual spawn
+    const sizeRoll = Phaser.Math.Between(1, 100);
+    let size: AsteroidSize;
+    if (sizeRoll <= 50) {
+      size = 'small';
+    } else if (sizeRoll <= 85) {
+      size = 'medium';
+    } else {
+      size = 'large';
+    }
+
+    // Spawn at center top of screen
+    const x = this.scene.cameras.main.width / 2;
+    const y = -50;
+
+    const asteroid = this.asteroids.get(x, y, size) as Asteroid;
+
+    if (asteroid) {
+      asteroid.spawn(x, y, size);
+    }
+  }
+
   increaseDifficulty(): void {
     if (this.spawnDelay > this.minSpawnDelay) {
       this.spawnDelay -= ASTEROID_CONFIG.SPAWN_DIFFICULTY_INCREASE;

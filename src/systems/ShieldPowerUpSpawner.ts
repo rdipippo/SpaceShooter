@@ -47,7 +47,7 @@ export class ShieldPowerUpSpawner {
       powerUp.spawn(x, y);
     }
   }
-  -
+  
   private spawnPowerUp(): void {
     // Random X position at top of screen
     const x = Phaser.Math.Between(30, this.scene.cameras.main.width - 30);

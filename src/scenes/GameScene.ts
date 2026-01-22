@@ -3,6 +3,7 @@ import { Player } from '../entities/Player';
 import { EnemySpawner } from '../systems/EnemySpawner';
 import { AsteroidSpawner } from '../systems/AsteroidSpawner';
 import { ShieldPowerUpSpawner } from '../systems/ShieldPowerUpSpawner';
+import { BossSpawner } from '../systems/BossSpawner';
 import { CollisionManager } from '../systems/CollisionManager';
 import { ScoreManager } from '../systems/ScoreManager';
 import { HUD } from '../ui/HUD';
@@ -12,6 +13,7 @@ export class GameScene extends Phaser.Scene {
   private enemySpawner!: EnemySpawner;
   private asteroidSpawner!: AsteroidSpawner;
   private shieldPowerUpSpawner!: ShieldPowerUpSpawner;
+  private bossSpawner!: BossSpawner;
   private scoreManager!: ScoreManager;
   private collisionManager!: CollisionManager;
   private hud!: HUD;
@@ -35,6 +37,7 @@ export class GameScene extends Phaser.Scene {
     // Remove any existing event listeners to prevent duplicates on restart
     this.events.off('enemyDestroyed', this.handleEnemyDestroyed, this);
     this.events.off('asteroidDestroyed', this.handleAsteroidDestroyed, this);
+    this.events.off('bossDestroyed', this.handleBossDestroyed, this);
     this.events.off('playerDied', this.handlePlayerDied, this);
 
     // Set up Enter key for pause/resume
@@ -78,8 +81,12 @@ export class GameScene extends Phaser.Scene {
     // Create shield power-up spawner
     this.shieldPowerUpSpawner = new ShieldPowerUpSpawner(this);
 
+    // Create boss spawner (spawns after 3 minutes)
+    this.bossSpawner = new BossSpawner(this);
+    this.bossSpawner.setPlayer(this.player);
+
     // Set up collision manager
-    this.collisionManager = new CollisionManager(this, this.player, this.enemySpawner, this.asteroidSpawner, this.shieldPowerUpSpawner);
+    this.collisionManager = new CollisionManager(this, this.player, this.enemySpawner, this.asteroidSpawner, this.shieldPowerUpSpawner, this.bossSpawner);
 
     // Create HUD
     this.hud = new HUD(this);
@@ -90,6 +97,7 @@ export class GameScene extends Phaser.Scene {
     // Set up event listeners
     this.events.on('enemyDestroyed', this.handleEnemyDestroyed, this);
     this.events.on('asteroidDestroyed', this.handleAsteroidDestroyed, this);
+    this.events.on('bossDestroyed', this.handleBossDestroyed, this);
     this.events.on('playerDied', this.handlePlayerDied, this);
 
     // Test mode setup
@@ -97,6 +105,7 @@ export class GameScene extends Phaser.Scene {
       this.enemySpawner.stopSpawning();
       this.asteroidSpawner.stopSpawning();
       this.shieldPowerUpSpawner.stopSpawning();
+      this.bossSpawner.stopSpawning();
       this.createTestModeUI();
     }
   }
@@ -161,6 +170,46 @@ export class GameScene extends Phaser.Scene {
       event.stopPropagation();
       this.spawnTestShield();
     });
+
+    buttonY += buttonSpacing;
+
+    // Boss button
+    const bossBtn = this.add.text(buttonX, buttonY, 'Boss', buttonStyle);
+    bossBtn.setOrigin(0.5);
+    bossBtn.setInteractive({ useHandCursor: true });
+    bossBtn.setDepth(100);
+    bossBtn.on('pointerover', () => bossBtn.setStyle({ backgroundColor: '#555555' }));
+    bossBtn.on('pointerout', () => bossBtn.setStyle({ backgroundColor: '#333333' }));
+    bossBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      this.spawnTestBoss();
+    });
+
+    buttonY += buttonSpacing;
+
+    // Invincible button
+    const invincibleBtn = this.add.text(buttonX, buttonY, 'Invincible', buttonStyle);
+    invincibleBtn.setOrigin(0.5);
+    invincibleBtn.setInteractive({ useHandCursor: true });
+    invincibleBtn.setDepth(100);
+    invincibleBtn.on('pointerover', () => invincibleBtn.setStyle({ backgroundColor: '#555555' }));
+    invincibleBtn.on('pointerout', () => {
+      if (this.player.getInvincible()) {
+        invincibleBtn.setStyle({ backgroundColor: '#006600' });
+      } else {
+        invincibleBtn.setStyle({ backgroundColor: '#333333' });
+      }
+    });
+    invincibleBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      const newState = !this.player.getInvincible();
+      this.player.setInvincible(newState);
+      if (newState) {
+        invincibleBtn.setStyle({ backgroundColor: '#006600' });
+      } else {
+        invincibleBtn.setStyle({ backgroundColor: '#333333' });
+      }
+    });
   }
 
   private spawnTestAsteroid(): void {
@@ -173,6 +222,10 @@ export class GameScene extends Phaser.Scene {
 
   private spawnTestShield(): void {
     this.shieldPowerUpSpawner.spawnSingle();
+  }
+
+  private spawnTestBoss(): void {
+    this.bossSpawner.spawnSingle();
   }
 
   update(time: number): void {
@@ -198,6 +251,10 @@ export class GameScene extends Phaser.Scene {
     this.addScoreAndCheckDifficulty(scoreValue);
   }
 
+  private handleBossDestroyed(scoreValue: number): void {
+    this.addScoreAndCheckDifficulty(scoreValue);
+  }
+
   private addScoreAndCheckDifficulty(scoreValue: number): void {
     this.scoreManager.addScore(scoreValue);
     this.hud.updateScore(this.scoreManager.getCurrentScore());
@@ -219,6 +276,7 @@ export class GameScene extends Phaser.Scene {
     this.enemySpawner.stopSpawning();
     this.asteroidSpawner.stopSpawning();
     this.shieldPowerUpSpawner.stopSpawning();
+    this.bossSpawner.stopSpawning();
 
     // Transition to game over scene after a brief delay
     this.time.delayedCall(1000, () => {
@@ -260,6 +318,7 @@ export class GameScene extends Phaser.Scene {
     // Clean up event listeners
     this.events.off('enemyDestroyed', this.handleEnemyDestroyed, this);
     this.events.off('asteroidDestroyed', this.handleAsteroidDestroyed, this);
+    this.events.off('bossDestroyed', this.handleBossDestroyed, this);
     this.events.off('playerDied', this.handlePlayerDied, this);
   }
 }

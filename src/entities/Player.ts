@@ -20,6 +20,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     d: Phaser.Input.Keyboard.Key;
   };
   private isInvulnerable: boolean = false;
+  private isInvincible: boolean = false;
   private touchActive: boolean = false;
   private touchStartPosition: Phaser.Math.Vector2 | null = null;
   private touchStartTime: number = 0;
@@ -217,7 +218,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   takeDamage(amount: number): void {
-    if (this.isInvulnerable) return;
+    if (this.isInvulnerable || this.isInvincible) return;
 
     this.health -= amount;
 
@@ -258,6 +259,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   getBullets(): Phaser.Physics.Arcade.Group {
     return this.bullets;
+  }
+
+  setInvincible(value: boolean): void {
+    this.isInvincible = value;
+  }
+
+  getInvincible(): boolean {
+    return this.isInvincible;
   }
 }
 

@@ -64,6 +64,26 @@ export const SHIELD_POWERUP_CONFIG = {
   SPAWN_RATE_MULTIPLIER: 10  // Spawns at 10% of enemy rate (10x slower)
 };
 
+export const BOSS_CONFIG = {
+  HEALTH: 10,
+  WIDTH: 200,
+  HEIGHT: 100,
+  SPEED: 150,
+  SCORE_VALUE: 500,
+  SPAWN_TIME: 180000,  // 3 minutes in milliseconds
+  Y_POSITION: 80,      // Distance from top of screen
+  SHOOTING: {
+    FIRE_RATE: 800,          // milliseconds between shots
+    BULLET_SPEED: 300,       // pixels per second
+    BULLET_DAMAGE: 1,
+    GUN_COUNT: 5             // Number of guns on the boss
+  },
+  DODGE: {
+    REACTION_DISTANCE: 150,  // Distance at which boss starts dodging
+    DODGE_SPEED: 250         // Speed when dodging
+  }
+};
+
 export const COLORS = {
   PLAYER: 0x00ff00,
   ENEMY_BASIC: 0xff0000,
@@ -72,7 +92,9 @@ export const COLORS = {
   STAR: 0xffffff,
   EXPLOSION: 0xff8800,
   ASTEROID: 0x8b7355,
-  SHIELD_POWERUP: 0x00ffff
+  SHIELD_POWERUP: 0x00ffff,
+  BOSS: 0x990099,
+  BOSS_BULLET: 0xff00ff
 };
 
 export const UI_CONFIG = {

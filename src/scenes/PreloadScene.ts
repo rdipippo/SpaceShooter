@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, ASTEROID_CONFIG } from '../utils/Constants';
+import { COLORS, ASTEROID_CONFIG, BOSS_CONFIG } from '../utils/Constants';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -67,6 +67,10 @@ export class PreloadScene extends Phaser.Scene {
 
     // Create shield power-up texture
     this.createShieldPowerUpTexture();
+
+    // Create boss textures
+    this.createBossTexture();
+    this.createBossBulletTexture();
 
     this.scene.start('MainMenuScene');
   }
@@ -152,5 +156,88 @@ export class PreloadScene extends Phaser.Scene {
     particleGraphics.fillCircle(3, 3, 3);
     particleGraphics.generateTexture('shield_particle', 6, 6);
     particleGraphics.destroy();
+  }
+
+  private createBossTexture(): void {
+    const graphics = this.add.graphics();
+    const width = BOSS_CONFIG.WIDTH;
+    const height = BOSS_CONFIG.HEIGHT;
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Main body - dark purple hull
+    graphics.fillStyle(COLORS.BOSS);
+    graphics.beginPath();
+    // Draw a menacing ship shape
+    graphics.moveTo(centerX, 5); // Top center point
+    graphics.lineTo(width - 10, centerY - 10); // Top right
+    graphics.lineTo(width - 5, centerY + 15); // Right wing
+    graphics.lineTo(width - 30, height - 10); // Right bottom
+    graphics.lineTo(centerX, height - 5); // Bottom center
+    graphics.lineTo(30, height - 10); // Left bottom
+    graphics.lineTo(5, centerY + 15); // Left wing
+    graphics.lineTo(10, centerY - 10); // Top left
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Add darker armor plating
+    graphics.fillStyle(0x660066);
+    graphics.fillRect(centerX - 60, centerY - 15, 120, 35);
+    graphics.fillRect(centerX - 40, centerY - 25, 80, 15);
+
+    // Cockpit/bridge area
+    graphics.fillStyle(0x330033);
+    graphics.fillRoundedRect(centerX - 25, centerY - 20, 50, 30, 5);
+
+    // Add glowing elements
+    graphics.fillStyle(0xff00ff);
+    graphics.fillCircle(centerX, centerY - 5, 8);
+
+    // Gun turrets (5 guns spread across)
+    const gunCount = BOSS_CONFIG.SHOOTING.GUN_COUNT;
+    const gunSpacing = width / (gunCount + 1);
+    graphics.fillStyle(0xcc00cc);
+    for (let i = 1; i <= gunCount; i++) {
+      const gunX = gunSpacing * i;
+      graphics.fillRect(gunX - 6, height - 20, 12, 20);
+      graphics.fillStyle(0xff00ff);
+      graphics.fillCircle(gunX, height - 5, 4);
+      graphics.fillStyle(0xcc00cc);
+    }
+
+    // Add some engine glow at top
+    graphics.fillStyle(0xff66ff);
+    graphics.fillCircle(centerX - 40, 15, 6);
+    graphics.fillCircle(centerX + 40, 15, 6);
+    graphics.fillCircle(centerX, 10, 8);
+
+    // Wing details
+    graphics.lineStyle(2, 0xaa00aa);
+    graphics.lineBetween(15, centerY, 40, height - 15);
+    graphics.lineBetween(width - 15, centerY, width - 40, height - 15);
+
+    graphics.generateTexture('boss', width, height);
+    graphics.destroy();
+  }
+
+  private createBossBulletTexture(): void {
+    const graphics = this.add.graphics();
+    const width = 10;
+    const height = 16;
+
+    // Draw boss bullet - larger purple/magenta projectile
+    graphics.fillStyle(COLORS.BOSS_BULLET);
+    graphics.fillRoundedRect(0, 0, width, height, 3);
+
+    // Add bright center glow
+    graphics.fillStyle(0xffaaff);
+    graphics.fillRoundedRect(2, 2, width - 4, height - 4, 2);
+
+    // Inner core
+    graphics.fillStyle(0xffffff);
+    graphics.fillRect(3, 4, width - 6, height - 8);
+
+    graphics.generateTexture('boss_bullet', width, height);
+    graphics.destroy();
   }
 }

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
 import { Bullet } from '../entities/Bullet';
+import { EnemyBullet } from '../entities/EnemyBullet';
 import { Asteroid } from '../entities/Asteroid';
 import { ShieldPowerUp } from '../entities/ShieldPowerUp';
 import { EnemySpawner } from './EnemySpawner';
@@ -46,6 +47,15 @@ export class CollisionManager {
       this.player,
       this.enemySpawner.getEnemies(),
       this.playerEnemyCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+      undefined,
+      this
+    );
+
+    // Enemy bullets hit player
+    this.scene.physics.add.overlap(
+      this.player,
+      this.enemySpawner.getEnemyBullets(),
+      this.enemyBulletPlayerCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
       undefined,
       this
     );
@@ -119,6 +129,23 @@ export class CollisionManager {
 
     // Destroy enemy
     enemy.takeDamage(999);
+  }
+
+  private enemyBulletPlayerCollision(
+    playerObj: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile,
+    bulletObj: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile
+  ): void {
+    const player = playerObj as Player;
+    const bullet = bulletObj as EnemyBullet;
+
+    if (!player.active || !bullet.active) return;
+
+    // Destroy bullet
+    bullet.setActive(false);
+    bullet.setVisible(false);
+
+    // Damage player
+    player.takeDamage(bullet.damage);
   }
 
   private bulletAsteroidCollision(

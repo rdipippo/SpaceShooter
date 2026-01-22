@@ -20,7 +20,13 @@ export const ENEMY_CONFIG = {
   },
   INITIAL_SPAWN_DELAY: 2000,  // milliseconds
   MIN_SPAWN_DELAY: 500,        // minimum spawn delay (max difficulty)
-  SPAWN_DIFFICULTY_INCREASE: 50  // decrease delay by this amount
+  SPAWN_DIFFICULTY_INCREASE: 50,  // decrease delay by this amount
+  SHOOTING: {
+    DETECTION_RANGE: 200,     // pixels - distance at which enemy starts shooting
+    FIRE_RATE: 1500,          // milliseconds between shots
+    BULLET_SPEED: 250,        // pixels per second
+    BULLET_DAMAGE: 1
+  }
 };
 
 export const ASTEROID_CONFIG = {
@@ -62,6 +68,7 @@ export const COLORS = {
   PLAYER: 0x00ff00,
   ENEMY_BASIC: 0xff0000,
   BULLET: 0xffff00,
+  ENEMY_BULLET: 0xff4444,
   STAR: 0xffffff,
   EXPLOSION: 0xff8800,
   ASTEROID: 0x8b7355,

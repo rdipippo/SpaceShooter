@@ -1,10 +1,15 @@
 import Phaser from 'phaser';
 import { ENEMY_CONFIG } from '../utils/Constants';
+import { EnemyBullet } from './EnemyBullet';
+import { Player } from './Player';
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private health!: number;
   private speed!: number;
   public scoreValue!: number;
+  private lastFireTime: number = 0;
+  private player: Player | null = null;
+  private bullets: Phaser.Physics.Arcade.Group | null = null;
 
   constructor(scene: Phaser.Scene, x: number, y: number, type: string = 'basic') {
     super(scene, x, y, `enemy_${type}`);
@@ -13,6 +18,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
+  }
+
+  setShootingTargets(player: Player, bullets: Phaser.Physics.Arcade.Group): void {
+    this.player = player;
+    this.bullets = bullets;
   }
 
   private setEnemyProperties(type: string): void {
@@ -35,6 +45,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setActive(true);
     this.setVisible(true);
     this.setVelocityY(this.speed);
+    this.lastFireTime = 0;
   }
 
   preUpdate(time: number, delta: number): void {
@@ -44,6 +55,37 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.y > this.scene.cameras.main.height + this.height) {
       this.setActive(false);
       this.setVisible(false);
+      return;
+    }
+
+    // Check if player is within range and shoot
+    this.tryShootAtPlayer(time);
+  }
+
+  private tryShootAtPlayer(time: number): void {
+    if (!this.player || !this.bullets || !this.player.active) return;
+
+    // Calculate distance to player
+    const dx = this.player.x - this.x;
+    const dy = this.player.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Only shoot if player is within detection range and below the enemy
+    if (distance <= ENEMY_CONFIG.SHOOTING.DETECTION_RANGE && dy > 0) {
+      // Check fire rate
+      if (time - this.lastFireTime >= ENEMY_CONFIG.SHOOTING.FIRE_RATE) {
+        this.shoot();
+        this.lastFireTime = time;
+      }
+    }
+  }
+
+  private shoot(): void {
+    if (!this.bullets) return;
+
+    const bullet = this.bullets.get(this.x, this.y + 20) as EnemyBullet;
+    if (bullet) {
+      bullet.fire(this.x, this.y + 20);
     }
   }
 

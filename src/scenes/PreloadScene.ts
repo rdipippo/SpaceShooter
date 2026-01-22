@@ -50,6 +50,9 @@ export class PreloadScene extends Phaser.Scene {
     starGraphics.generateTexture('star', 2, 2);
     starGraphics.destroy();
 
+    // Create enemy bullet texture
+    this.createEnemyBulletTexture();
+
     // Create asteroid textures for all sizes
     this.createAsteroidTexture('small', ASTEROID_CONFIG.SMALL.RADIUS);
     this.createAsteroidTexture('medium', ASTEROID_CONFIG.MEDIUM.RADIUS);
@@ -106,6 +109,23 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     graphics.generateTexture(`asteroid_${size}`, diameter, diameter);
+    graphics.destroy();
+  }
+
+  private createEnemyBulletTexture(): void {
+    const graphics = this.add.graphics();
+    const width = 6;
+    const height = 12;
+
+    // Draw enemy bullet - red elongated shape
+    graphics.fillStyle(COLORS.ENEMY_BULLET);
+    graphics.fillRoundedRect(0, 0, width, height, 2);
+
+    // Add brighter center for glow effect
+    graphics.fillStyle(0xff8888);
+    graphics.fillRoundedRect(1, 2, width - 2, height - 4, 1);
+
+    graphics.generateTexture('enemy_bullet', width, height);
     graphics.destroy();
   }
 

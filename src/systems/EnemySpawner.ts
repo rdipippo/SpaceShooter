@@ -1,10 +1,14 @@
 import Phaser from 'phaser';
 import { Enemy } from '../entities/Enemy';
+import { EnemyBullet } from '../entities/EnemyBullet';
+import { Player } from '../entities/Player';
 import { ENEMY_CONFIG } from '../utils/Constants';
 
 export class EnemySpawner {
   private scene: Phaser.Scene;
   private enemies!: Phaser.Physics.Arcade.Group;
+  private enemyBullets!: Phaser.Physics.Arcade.Group;
+  private player: Player | null = null;
   private spawnTimer?: Phaser.Time.TimerEvent;
   private spawnDelay: number;
   private minSpawnDelay: number;
@@ -15,13 +19,26 @@ export class EnemySpawner {
     this.minSpawnDelay = ENEMY_CONFIG.MIN_SPAWN_DELAY;
 
     this.initEnemyGroup();
+    this.initEnemyBulletGroup();
     this.startSpawning();
+  }
+
+  setPlayer(player: Player): void {
+    this.player = player;
   }
 
   private initEnemyGroup(): void {
     this.enemies = this.scene.physics.add.group({
       classType: Enemy,
       maxSize: 20,
+      runChildUpdate: true
+    });
+  }
+
+  private initEnemyBulletGroup(): void {
+    this.enemyBullets = this.scene.physics.add.group({
+      classType: EnemyBullet,
+      maxSize: 50,
       runChildUpdate: true
     });
   }
@@ -44,6 +61,9 @@ export class EnemySpawner {
 
     if (enemy) {
       enemy.spawn(x, y);
+      if (this.player) {
+        enemy.setShootingTargets(this.player, this.enemyBullets);
+      }
     }
   }
 
@@ -56,6 +76,9 @@ export class EnemySpawner {
 
     if (enemy) {
       enemy.spawn(x, y);
+      if (this.player) {
+        enemy.setShootingTargets(this.player, this.enemyBullets);
+      }
     }
   }
 
@@ -82,10 +105,15 @@ export class EnemySpawner {
   destroyAll(): void {
     this.stopSpawning();
     this.enemies.clear(true, true);
+    this.enemyBullets.clear(true, true);
   }
 
   getEnemies(): Phaser.Physics.Arcade.Group {
     return this.enemies;
+  }
+
+  getEnemyBullets(): Phaser.Physics.Arcade.Group {
+    return this.enemyBullets;
   }
 
   getSpawnDelay(): number {

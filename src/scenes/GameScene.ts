@@ -68,8 +68,9 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.height - 100
     );
 
-    // Create enemy spawner
+    // Create enemy spawner and set player reference for enemy shooting
     this.enemySpawner = new EnemySpawner(this);
+    this.enemySpawner.setPlayer(this.player);
 
     // Create asteroid spawner
     this.asteroidSpawner = new AsteroidSpawner(this);

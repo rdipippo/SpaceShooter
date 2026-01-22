@@ -8,6 +8,7 @@ export class HUD {
   private highScoreText!: Phaser.GameObjects.Text;
   private pauseGameText!: Phaser.GameObjects.Text;
   private resetGameText!: Phaser.GameObjects.Text;
+  private victoryText!: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -17,6 +18,10 @@ export class HUD {
   public setPaused(paused: boolean): void {
     this.pauseGameText.setVisible(paused);
     this.resetGameText.setVisible(paused);
+  }
+
+  public victory(): void {
+    this.victoryText.setVisible(true);
   }
 
   private createUI(): void {
@@ -72,6 +77,16 @@ export class HUD {
     this.highScoreText.setOrigin(1, 0);
     this.highScoreText.setScrollFactor(0);
     this.highScoreText.setDepth(100);
+
+    this.victoryText = this.scene.add.text(
+      this.scene.cameras.main.width / 2,
+      this.scene.cameras.main.height / 2,
+      'VICTORY',
+      { fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: UI_CONFIG.TITLE_FONT_SIZE, color: '#ffffff' }
+    ).setVisible(false);
+    this.victoryText.setOrigin(0.5);
+    this.victoryText.setScrollFactor(0);
+    this.victoryText.setDepth(100);
   }
 
   updateScore(score: number): void {

@@ -253,6 +253,9 @@ export class GameScene extends Phaser.Scene {
 
   private handleBossDestroyed(scoreValue: number): void {
     this.addScoreAndCheckDifficulty(scoreValue);
+    this.physics.pause();
+    this.time.paused = true;
+    this.hud.victory();
   }
 
   private addScoreAndCheckDifficulty(scoreValue: number): void {

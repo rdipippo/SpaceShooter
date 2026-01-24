@@ -19,9 +19,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     s: Phaser.Input.Keyboard.Key;
     d: Phaser.Input.Keyboard.Key;
   };
-  private isInvulnerable: boolean = false;
-  private isInvincible: boolean = false;
+  private isInvulnerable: boolean = false; // for after taking damage
+  private isInvincible: boolean = false; // for test mode - can it be merged with isInvulnerable?
   private touchActive: boolean = false;
+  private gamePaused: boolean = false;
   private touchStartPosition: Phaser.Math.Vector2 | null = null;
   private touchStartTime: number = 0;
   private isDragging: boolean = false;
@@ -49,6 +50,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const radius = 12;
     // Offset the circle to center it on the sprite (assuming ~32x32 sprite)
     body.setCircle(radius, this.width / 2 - radius, this.height / 2 - radius);
+
+    this.scene.events.on('gamePaused', () => {
+      this.gamePaused = true;
+    });
+
+    this.scene.events.on('gameResumed', () => {
+      this.gamePaused = false;
+    });
 
     // Set up input
     this.setupInput();
@@ -82,6 +91,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Handle touch start
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (this.gamePaused) return;
+      
       this.touchStartPosition = new Phaser.Math.Vector2(pointer.worldX, pointer.worldY);
       this.shipStartPosition = new Phaser.Math.Vector2(this.x, this.y);
       this.touchActive = true;
@@ -125,6 +136,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Handle touch end - check if it was a tap (shoot) or drag (move)
     this.scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (this.gamePaused) {
+        return;
+      }
+      
       if (this.touchStartPosition && !this.isDragging) {
         // It was a tap - trigger shooting
         const currentTime = this.scene.time.now;
@@ -161,11 +176,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update(time: number): void {
+    if (this.gamePaused) return;
     this.handleMovement();
     this.handleShooting(time);
   }
 
   private handleMovement(): void {
+
     // Reset velocity for keyboard movement
     this.setVelocity(0);
 

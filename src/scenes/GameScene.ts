@@ -50,10 +50,12 @@ export class GameScene extends Phaser.Scene {
           this.physics.pause();
           this.time.paused = true;
           this.hud.setPaused(true)
+          this.events.emit('gamePaused');
         } else {
           this.physics.resume();
           this.time.paused = false;
           this.hud.setPaused(false);
+          this.events.emit('gameResumed');
         }
       });
     }

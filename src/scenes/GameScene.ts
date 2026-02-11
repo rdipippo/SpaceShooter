@@ -7,13 +7,18 @@ import { BossSpawner } from '../systems/BossSpawner';
 import { CollisionManager } from '../systems/CollisionManager';
 import { ScoreManager } from '../systems/ScoreManager';
 import { HUD } from '../ui/HUD';
+import { TestUI } from '@/ui/TestUI';
+import { LevelConfig, LevelConfigData } from '@/utils/LevelConfig';
 
 export class GameScene extends Phaser.Scene {
-  private player!: Player;
-  private enemySpawner!: EnemySpawner;
-  private asteroidSpawner!: AsteroidSpawner;
-  private shieldPowerUpSpawner!: ShieldPowerUpSpawner;
-  private bossSpawner!: BossSpawner;
+  public player!: Player;
+  public enemySpawner!: EnemySpawner;
+  public asteroidSpawner!: AsteroidSpawner;
+  public shieldPowerUpSpawner!: ShieldPowerUpSpawner;
+  public bossSpawner!: BossSpawner;
+  public levelConfig!: LevelConfig;
+
+  private level: string = "1-1";
   private scoreManager!: ScoreManager;
   private collisionManager!: CollisionManager;
   private hud!: HUD;
@@ -26,11 +31,20 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
-  init(data: { testMode?: boolean }): void {
+  init(data: { testMode?: boolean, level?: string }): void {
     this.testMode = data.testMode || false;
+    this.level = data.level || "1-1";
+  }
+
+  preload(): void {
+    // Load the level configuration JSON
+    this.load.json('levelConfig', `config/levels/${this.level}.json`);
   }
 
   create(): void {
+    // Initialize level config from loaded JSON
+    const configData = this.cache.json.get('levelConfig') as LevelConfigData;
+    this.levelConfig = new LevelConfig(this.level, configData);
     this.gameOver = false;
     this.paused = false;
 
@@ -46,7 +60,6 @@ export class GameScene extends Phaser.Scene {
       enterKey.on('down', () => {
         this.paused = !this.paused;
         if (this.paused) {
-          // Pause physics and timers but keep scene active for input
           this.physics.pause();
           this.time.paused = true;
           this.hud.setPaused(true)
@@ -108,126 +121,9 @@ export class GameScene extends Phaser.Scene {
       this.asteroidSpawner.stopSpawning();
       this.shieldPowerUpSpawner.stopSpawning();
       this.bossSpawner.stopSpawning();
-      this.createTestModeUI();
+
+      const testUI = new TestUI(this);
     }
-  }
-
-  private createTestModeUI(): void {
-    const buttonStyle = {
-      fontFamily: 'Arial',
-      fontSize: '14px',
-      color: '#ffffff',
-      backgroundColor: '#333333',
-      padding: { x: 10, y: 8 }
-    };
-
-    const buttonX = 70;
-    let buttonY = 120;
-    const buttonSpacing = 50;
-
-    // Test mode label
-    const label = this.add.text(10, 80, 'TEST MODE', {
-      fontFamily: 'Arial',
-      fontSize: '16px',
-      color: '#ff9900'
-    });
-    label.setDepth(100);
-
-    // Asteroid button
-    const asteroidBtn = this.add.text(buttonX, buttonY, 'Asteroid', buttonStyle);
-    asteroidBtn.setOrigin(0.5);
-    asteroidBtn.setInteractive({ useHandCursor: true });
-    asteroidBtn.setDepth(100);
-    asteroidBtn.on('pointerover', () => asteroidBtn.setStyle({ backgroundColor: '#555555' }));
-    asteroidBtn.on('pointerout', () => asteroidBtn.setStyle({ backgroundColor: '#333333' }));
-    asteroidBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-      event.stopPropagation();
-      this.spawnTestAsteroid();
-    });
-
-    buttonY += buttonSpacing;
-
-    // Enemy button
-    const enemyBtn = this.add.text(buttonX, buttonY, 'Enemy', buttonStyle);
-    enemyBtn.setOrigin(0.5);
-    enemyBtn.setInteractive({ useHandCursor: true });
-    enemyBtn.setDepth(100);
-    enemyBtn.on('pointerover', () => enemyBtn.setStyle({ backgroundColor: '#555555' }));
-    enemyBtn.on('pointerout', () => enemyBtn.setStyle({ backgroundColor: '#333333' }));
-    enemyBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-      event.stopPropagation();
-      this.spawnTestEnemy();
-    });
-
-    buttonY += buttonSpacing;
-
-    // Shield button
-    const shieldBtn = this.add.text(buttonX, buttonY, 'Shield', buttonStyle);
-    shieldBtn.setOrigin(0.5);
-    shieldBtn.setInteractive({ useHandCursor: true });
-    shieldBtn.setDepth(100);
-    shieldBtn.on('pointerover', () => shieldBtn.setStyle({ backgroundColor: '#555555' }));
-    shieldBtn.on('pointerout', () => shieldBtn.setStyle({ backgroundColor: '#333333' }));
-    shieldBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-      event.stopPropagation();
-      this.spawnTestShield();
-    });
-
-    buttonY += buttonSpacing;
-
-    // Boss button
-    const bossBtn = this.add.text(buttonX, buttonY, 'Boss', buttonStyle);
-    bossBtn.setOrigin(0.5);
-    bossBtn.setInteractive({ useHandCursor: true });
-    bossBtn.setDepth(100);
-    bossBtn.on('pointerover', () => bossBtn.setStyle({ backgroundColor: '#555555' }));
-    bossBtn.on('pointerout', () => bossBtn.setStyle({ backgroundColor: '#333333' }));
-    bossBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-      event.stopPropagation();
-      this.spawnTestBoss();
-    });
-
-    buttonY += buttonSpacing;
-
-    // Invincible button
-    const invincibleBtn = this.add.text(buttonX, buttonY, 'Invincible', buttonStyle);
-    invincibleBtn.setOrigin(0.5);
-    invincibleBtn.setInteractive({ useHandCursor: true });
-    invincibleBtn.setDepth(100);
-    invincibleBtn.on('pointerover', () => invincibleBtn.setStyle({ backgroundColor: '#555555' }));
-    invincibleBtn.on('pointerout', () => {
-      if (this.player.getInvincible()) {
-        invincibleBtn.setStyle({ backgroundColor: '#006600' });
-      } else {
-        invincibleBtn.setStyle({ backgroundColor: '#333333' });
-      }
-    });
-    invincibleBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-      event.stopPropagation();
-      const newState = !this.player.getInvincible();
-      this.player.setInvincible(newState);
-      if (newState) {
-        invincibleBtn.setStyle({ backgroundColor: '#006600' });
-      } else {
-        invincibleBtn.setStyle({ backgroundColor: '#333333' });
-      }
-    });
-  }
-
-  private spawnTestAsteroid(): void {
-    this.asteroidSpawner.spawnSingle();
-  }
-
-  private spawnTestEnemy(): void {
-    this.enemySpawner.spawnSingle();
-  }
-
-  private spawnTestShield(): void {
-    this.shieldPowerUpSpawner.spawnSingle();
-  }
-
-  private spawnTestBoss(): void {
-    this.bossSpawner.spawnSingle();
   }
 
   update(time: number): void {
@@ -255,8 +151,12 @@ export class GameScene extends Phaser.Scene {
 
   private handleBossDestroyed(scoreValue: number): void {
     this.addScoreAndCheckDifficulty(scoreValue);
+    this.paused = true;
     this.physics.pause();
     this.time.paused = true;
+    this.physics.pause();
+
+    this.events.emit('gamePaused');
     this.hud.victory();
   }
 

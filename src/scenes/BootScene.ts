@@ -12,6 +12,6 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     // Initialize game systems if needed
     // Move to PreloadScene
-    this.scene.start('PreloadScene');
+    this.scene.start('PreloadScene', {level: '1-1'});
   }
 }

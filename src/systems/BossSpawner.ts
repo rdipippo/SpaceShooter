@@ -2,17 +2,18 @@ import Phaser from 'phaser';
 import { Boss } from '../entities/Boss';
 import { BossBullet } from '../entities/BossBullet';
 import { Player } from '../entities/Player';
-import { BOSS_CONFIG, GAME_CONFIG } from '../utils/Constants';
+import { GAME_CONFIG } from '../utils/Constants';
+import { GameScene } from '@/scenes/GameScene';
 
 export class BossSpawner {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private boss: Boss | null = null;
   private bossBullets!: Phaser.Physics.Arcade.Group;
   private player: Player | null = null;
   private spawnTimer?: Phaser.Time.TimerEvent;
   private bossSpawned: boolean = false;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
 
     this.initBossBulletGroup();
@@ -32,7 +33,8 @@ export class BossSpawner {
   }
 
   private startSpawnTimer(): void {
-    this.spawnTimer = this.scene.time.delayedCall(BOSS_CONFIG.SPAWN_TIME, () => {
+    const bossConfig = this.scene.levelConfig.getBossConfig();
+    this.spawnTimer = this.scene.time.delayedCall(bossConfig.SPAWN_TIME, () => {
       this.spawnBoss();
     });
   }
@@ -41,12 +43,13 @@ export class BossSpawner {
     if (this.bossSpawned) return;
 
     this.bossSpawned = true;
+    const bossConfig = this.scene.levelConfig.getBossConfig();
 
     // Spawn boss at center top of screen
     const x = GAME_CONFIG.WIDTH / 2;
-    const y = BOSS_CONFIG.Y_POSITION;
+    const y = bossConfig.Y_POSITION;
 
-    this.boss = new Boss(this.scene, x, -BOSS_CONFIG.HEIGHT);
+    this.boss = new Boss(this.scene, x, -1 * bossConfig.HEIGHT);
 
     // Animate boss entering from top
     this.scene.tweens.add({
@@ -70,9 +73,10 @@ export class BossSpawner {
     if (this.bossSpawned && this.boss && this.boss.active) return;
 
     this.bossSpawned = true;
+    const bossConfig = this.scene.levelConfig.getBossConfig();
 
     const x = GAME_CONFIG.WIDTH / 2;
-    const y = BOSS_CONFIG.Y_POSITION;
+    const y = bossConfig.Y_POSITION;
 
     this.boss = new Boss(this.scene, x, y);
 

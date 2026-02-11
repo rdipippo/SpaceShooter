@@ -1,18 +1,21 @@
 import Phaser from 'phaser';
 import { Asteroid, AsteroidSize } from '../entities/Asteroid';
-import { ASTEROID_CONFIG } from '../utils/Constants';
+import { GameScene } from '@/scenes/GameScene';
 
 export class AsteroidSpawner {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private asteroids!: Phaser.Physics.Arcade.Group;
   private spawnTimer?: Phaser.Time.TimerEvent;
   private spawnDelay: number;
   private minSpawnDelay: number;
+  private spawnDifficultyIncrease: number;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
-    this.spawnDelay = ASTEROID_CONFIG.INITIAL_SPAWN_DELAY;
-    this.minSpawnDelay = ASTEROID_CONFIG.MIN_SPAWN_DELAY;
+    const config = scene.levelConfig.getAsteroidConfig();
+    this.spawnDelay = config.INITIAL_SPAWN_DELAY;
+    this.minSpawnDelay = config.MIN_SPAWN_DELAY;
+    this.spawnDifficultyIncrease = config.SPAWN_DIFFICULTY_INCREASE;
 
     this.initAsteroidGroup();
     this.startSpawning();
@@ -106,7 +109,7 @@ export class AsteroidSpawner {
 
   increaseDifficulty(): void {
     if (this.spawnDelay > this.minSpawnDelay) {
-      this.spawnDelay -= ASTEROID_CONFIG.SPAWN_DIFFICULTY_INCREASE;
+      this.spawnDelay -= this.spawnDifficultyIncrease;
       this.spawnDelay = Math.max(this.spawnDelay, this.minSpawnDelay);
 
       if (this.spawnTimer) {

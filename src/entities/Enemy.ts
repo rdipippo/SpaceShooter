@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
-import { ENEMY_CONFIG } from '../utils/Constants';
 import { EnemyBullet } from './EnemyBullet';
 import { Player } from './Player';
+import { GameScene } from '@/scenes/GameScene';
+import { EnemyConfig } from '@/utils/LevelConfig';
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private health!: number;
@@ -20,17 +21,22 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
   }
 
+  private getEnemyConfig(): EnemyConfig {
+    return (this.scene as GameScene).levelConfig.getEnemyConfig();
+  }
+
   setShootingTargets(player: Player, bullets: Phaser.Physics.Arcade.Group): void {
     this.player = player;
     this.bullets = bullets;
   }
 
   private setEnemyProperties(type: string): void {
+    const config = this.getEnemyConfig();
     switch (type) {
       case 'basic':
-        this.health = ENEMY_CONFIG.BASIC.HEALTH;
-        this.speed = ENEMY_CONFIG.BASIC.SPEED;
-        this.scoreValue = ENEMY_CONFIG.BASIC.SCORE_VALUE;
+        this.health = config.BASIC.HEALTH;
+        this.speed = config.BASIC.SPEED;
+        this.scoreValue = config.BASIC.SCORE_VALUE;
         break;
       default:
         this.health = 1;
@@ -65,15 +71,17 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private tryShootAtPlayer(time: number): void {
     if (!this.player || !this.bullets || !this.player.active) return;
 
+    const config = this.getEnemyConfig();
+
     // Calculate distance to player
     const dx = this.player.x - this.x;
     const dy = this.player.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     // Only shoot if player is within detection range and below the enemy
-    if (distance <= ENEMY_CONFIG.SHOOTING.DETECTION_RANGE && dy > 0) {
+    if (distance <= config.SHOOTING.DETECTION_RANGE && dy > 0) {
       // Check fire rate
-      if (time - this.lastFireTime >= ENEMY_CONFIG.SHOOTING.FIRE_RATE) {
+      if (time - this.lastFireTime >= config.SHOOTING.FIRE_RATE) {
         this.shoot();
         this.lastFireTime = time;
       }

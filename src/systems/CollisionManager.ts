@@ -85,6 +85,16 @@ export class CollisionManager {
         undefined,
         this
       );
+
+      // Asteroids collide with each other (bounce + 1 damage each when overlap is deep enough)
+      const asteroidGroup = this.asteroidSpawner.getAsteroids();
+      this.scene.physics.add.collider(
+        asteroidGroup,
+        asteroidGroup,
+        this.asteroidAsteroidCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+        this.asteroidAsteroidProcess as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+        this
+      );
     }
 
     // Set up shield power-up collisions if spawner exists
@@ -230,6 +240,44 @@ export class CollisionManager {
 
     // Destroy asteroid
     asteroid.takeDamage(999);
+  }
+
+  /** Only run asteroid-asteroid damage when overlap is deep enough (so visuals look like they're touching). */
+  private asteroidAsteroidProcess(
+    asteroidObj1: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile,
+    asteroidObj2: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile
+  ): boolean {
+    const a = asteroidObj1 as Asteroid;
+    const b = asteroidObj2 as Asteroid;
+    if (!a.active || !b.active || a === b) return false;
+    const r1 = a.getCollisionRadius();
+    const r2 = b.getCollisionRadius();
+    const distance = Phaser.Math.Distance.Between(a.x, a.y, b.x, b.y);
+    const sumRadii = r1 + r2;
+    // Only trigger damage when they're overlapping enough (distance < sum of radii * threshold)
+    const overlapThreshold = 0.9;
+    return distance < sumRadii * overlapThreshold;
+  }
+
+  private asteroidAsteroidCollision(
+    asteroidObj1: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile,
+    asteroidObj2: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile
+  ): void {
+    const a = asteroidObj1 as Asteroid;
+    const b = asteroidObj2 as Asteroid;
+
+    if (!a.active || !b.active || a === b) return;
+    // Only apply damage when both are off cooldown so we don't damage every frame while overlapping
+    if (!a.canTakeAsteroidCollisionDamage() || !b.canTakeAsteroidCollisionDamage()) return;
+
+    a.markAsteroidCollisionDamage();
+    b.markAsteroidCollisionDamage();
+
+    const destroyedA = a.takeDamage(1);
+    const destroyedB = b.takeDamage(1);
+
+    if (destroyedA) this.scene.events.emit('asteroidDestroyed', a.scoreValue);
+    if (destroyedB) this.scene.events.emit('asteroidDestroyed', b.scoreValue);
   }
 
   private playerPowerUpCollision(

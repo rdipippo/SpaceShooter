@@ -1,12 +1,16 @@
 import Phaser from 'phaser';
-import { ASTEROID_CONFIG } from '../utils/Constants';
+import { GameScene } from '@/scenes/GameScene';
+import { AsteroidConfig, AsteroidSizeConfig } from '@/utils/LevelConfig';
 
 export type AsteroidSize = 'small' | 'medium' | 'large';
+
+const ASTEROID_COLLISION_DAMAGE_COOLDOWN_MS = 400;
 
 export class Asteroid extends Phaser.Physics.Arcade.Sprite {
   private health!: number;
   public scoreValue!: number;
   private asteroidSize!: AsteroidSize;
+  private lastAsteroidCollisionDamageTime: number = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, size: AsteroidSize = 'medium') {
     super(scene, x, y, `asteroid_${size}`);
@@ -17,14 +21,20 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    const asteroidConfig = this.getAsteroidConfig();
+
     // Enable physics body settings
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
-    body.setBounce(ASTEROID_CONFIG.BOUNCE, ASTEROID_CONFIG.BOUNCE);
-    
+    body.setBounce(asteroidConfig.BOUNCE, asteroidConfig.BOUNCE);
+
     // Set circular body size based on asteroid radius
     const config = this.getSizeConfig(size);
     body.setCircle(config.RADIUS);
+  }
+
+  private getAsteroidConfig(): AsteroidConfig {
+    return (this.scene as GameScene).levelConfig.getAsteroidConfig();
   }
 
   private setAsteroidProperties(size: AsteroidSize): void {
@@ -33,29 +43,41 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
     this.scoreValue = config.SCORE_VALUE;
   }
 
-  private getSizeConfig(size: AsteroidSize) {
+  private getSizeConfig(size: AsteroidSize): AsteroidSizeConfig {
+    const config = this.getAsteroidConfig();
     switch (size) {
       case 'small':
-        return ASTEROID_CONFIG.SMALL;
+        return config.SMALL;
       case 'medium':
-        return ASTEROID_CONFIG.MEDIUM;
+        return config.MEDIUM;
       case 'large':
-        return ASTEROID_CONFIG.LARGE;
+        return config.LARGE;
     }
+  }
+
+  /** Whether this asteroid can take 1 damage from another asteroid (cooldown to avoid multi-hit while overlapping). */
+  canTakeAsteroidCollisionDamage(): boolean {
+    return this.scene.time.now - this.lastAsteroidCollisionDamageTime > ASTEROID_COLLISION_DAMAGE_COOLDOWN_MS;
+  }
+
+  markAsteroidCollisionDamage(): void {
+    this.lastAsteroidCollisionDamageTime = this.scene.time.now;
   }
 
   spawn(x: number, y: number, size: AsteroidSize): void {
     this.asteroidSize = size;
     this.setAsteroidProperties(size);
+    this.lastAsteroidCollisionDamageTime = 0;
     this.setTexture(`asteroid_${size}`);
     this.setPosition(x, y);
     this.setActive(true);
     this.setVisible(true);
 
-    const config = this.getSizeConfig(size);
+    const asteroidConfig = this.getAsteroidConfig();
+    const sizeConfig = this.getSizeConfig(size);
 
     // Set random velocity in any direction
-    const speed = Phaser.Math.Between(config.MIN_SPEED, config.MAX_SPEED);
+    const speed = Phaser.Math.Between(sizeConfig.MIN_SPEED, sizeConfig.MAX_SPEED);
     const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
     const velocityX = Math.cos(angle) * speed;
     const velocityY = Math.sin(angle) * speed;
@@ -64,8 +86,8 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
 
     // Set random angular velocity (rotation)
     const angularVelocity = Phaser.Math.Between(
-      -ASTEROID_CONFIG.ANGULAR_VELOCITY_RANGE,
-      ASTEROID_CONFIG.ANGULAR_VELOCITY_RANGE
+      -asteroidConfig.ANGULAR_VELOCITY_RANGE,
+      asteroidConfig.ANGULAR_VELOCITY_RANGE
     );
     this.setAngularVelocity(angularVelocity);
 
@@ -75,10 +97,10 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
     // Configure physics body
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
-    body.setBounce(ASTEROID_CONFIG.BOUNCE, ASTEROID_CONFIG.BOUNCE);
-    
+    body.setBounce(asteroidConfig.BOUNCE, asteroidConfig.BOUNCE);
+
     // Set circular body size based on asteroid radius
-    body.setCircle(config.RADIUS);
+    body.setCircle(sizeConfig.RADIUS);
   }
 
   preUpdate(time: number, delta: number): void {
@@ -144,5 +166,10 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
 
   getSize(): AsteroidSize {
     return this.asteroidSize;
+  }
+
+  /** Radius used for physics/collision (from config). */
+  getCollisionRadius(): number {
+    return this.getSizeConfig(this.asteroidSize).RADIUS;
   }
 }

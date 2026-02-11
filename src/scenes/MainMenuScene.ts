@@ -96,13 +96,13 @@ export class MainMenuScene extends Phaser.Scene {
 
     // Click/tap to start
     startButton.on('pointerdown', () => {
-      this.scene.start('GameScene');
+      this.scene.start('GameScene', {level: "1-1"});
     });
 
     // Also allow spacebar to start
     if (this.input.keyboard) {
       this.input.keyboard.once('keydown-SPACE', () => {
-        this.scene.start('GameScene');
+        this.scene.start('GameScene', {level: "1-1"});
       });
     }
   }

@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "test": "vitest",
     "install-remote": "npm run build && ssh root@192.175.23.17 -t rm -rf /var/www/html && scp -r dist root@192.175.23.17:/var/www/html",
     "cap:init": "npx cap init",
     "cap:add:ios": "npx cap add ios",
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "typescript": "^5.3.3",
-    "vite": "^5.0.11"
+    "vite": "^5.0.11",
+    "vitest": "^4.0.18"
   }
 }

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { SHIELD_POWERUP_CONFIG } from '../utils/Constants';
+import { GameScene } from '@/scenes/GameScene';
+import { ShieldPowerupConfig } from '@/utils/LevelConfig';
 
 export class ShieldPowerUp extends Phaser.Physics.Arcade.Sprite {
   private speed: number;
@@ -8,11 +9,16 @@ export class ShieldPowerUp extends Phaser.Physics.Arcade.Sprite {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'shield_powerup');
 
-    this.speed = SHIELD_POWERUP_CONFIG.SPEED;
-    this.healAmount = SHIELD_POWERUP_CONFIG.HEAL_AMOUNT;
+    const config = this.getShieldConfig();
+    this.speed = config.SPEED;
+    this.healAmount = config.HEAL_AMOUNT;
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
+  }
+
+  private getShieldConfig(): ShieldPowerupConfig {
+    return (this.scene as GameScene).levelConfig.getShieldPowerupConfig();
   }
 
   spawn(x: number, y: number): void {

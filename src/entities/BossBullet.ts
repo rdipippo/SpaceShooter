@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BOSS_CONFIG } from '../utils/Constants';
+import { GameScene } from '@/scenes/GameScene';
 
 export class BossBullet extends Phaser.Physics.Arcade.Sprite {
   private speed: number;
@@ -7,8 +7,9 @@ export class BossBullet extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'boss_bullet');
-    this.speed = BOSS_CONFIG.SHOOTING.BULLET_SPEED;
-    this.damage = BOSS_CONFIG.SHOOTING.BULLET_DAMAGE;
+    const config = (scene as GameScene).levelConfig.getBossConfig();
+    this.speed = config.SHOOTING.BULLET_SPEED;
+    this.damage = config.SHOOTING.BULLET_DAMAGE;
   }
 
   fire(x: number, y: number): void {

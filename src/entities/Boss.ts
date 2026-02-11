@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
-import { BOSS_CONFIG, GAME_CONFIG } from '../utils/Constants';
+import { GAME_CONFIG } from '../utils/Constants';
 import { BossBullet } from './BossBullet';
 import { Player } from './Player';
 import { Bullet } from './Bullet';
+import { GameScene } from '@/scenes/GameScene';
+import { BossConfig } from '@/utils/LevelConfig';
 
 export class Boss extends Phaser.Physics.Arcade.Sprite {
   private health: number;
@@ -17,20 +19,21 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
   private isDodging: boolean = false;
   private healthBar: Phaser.GameObjects.Graphics | null = null;
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
+  constructor(scene: GameScene, x: number, y: number) {
     super(scene, x, y, 'boss');
+    const bossConfig = this.getBossConfig();
 
-    this.health = BOSS_CONFIG.HEALTH;
-    this.maxHealth = BOSS_CONFIG.HEALTH;
-    this.speed = BOSS_CONFIG.SPEED;
-    this.scoreValue = BOSS_CONFIG.SCORE_VALUE;
+    this.health = bossConfig.HEALTH;
+    this.maxHealth = bossConfig.HEALTH;
+    this.speed = bossConfig.SPEED;
+    this.scoreValue = bossConfig.SCORE_VALUE;
     this.targetX = x;
 
     // Calculate gun positions spread across the boss width
-    const gunCount = BOSS_CONFIG.SHOOTING.GUN_COUNT;
-    const gunSpacing = BOSS_CONFIG.WIDTH / (gunCount + 1);
+    const gunCount = bossConfig.SHOOTING.GUN_COUNT;
+    const gunSpacing = bossConfig.WIDTH / (gunCount + 1);
     for (let i = 1; i <= gunCount; i++) {
-      this.gunPositions.push(-BOSS_CONFIG.WIDTH / 2 + gunSpacing * i);
+      this.gunPositions.push(-1 * bossConfig.WIDTH / 2 + gunSpacing * i);
     }
 
     scene.add.existing(this);
@@ -38,11 +41,15 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
 
     // Set up physics body
     const body = this.body as Phaser.Physics.Arcade.Body;
-    body.setSize(BOSS_CONFIG.WIDTH - 20, BOSS_CONFIG.HEIGHT - 10);
+    body.setSize(bossConfig.WIDTH - 20, bossConfig.HEIGHT - 10);
     body.setCollideWorldBounds(true);
 
     // Create health bar
     this.createHealthBar();
+  }
+
+  private getBossConfig(): BossConfig {
+    return (this.scene as GameScene).levelConfig.getBossConfig();
   }
 
   private createHealthBar(): void {
@@ -55,10 +62,10 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
 
     this.healthBar.clear();
 
-    const barWidth = BOSS_CONFIG.WIDTH;
+    const barWidth = this.getBossConfig().WIDTH;
     const barHeight = 8;
     const barX = this.x - barWidth / 2;
-    const barY = this.y - BOSS_CONFIG.HEIGHT / 2 - 15;
+    const barY = this.y - this.getBossConfig().HEIGHT / 2 - 15;
 
     // Background
     this.healthBar.fillStyle(0x333333, 0.8);
@@ -117,7 +124,7 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
 
       // Check if bullet is within horizontal range of boss
       const dx = Math.abs(bullet.x - this.x);
-      if (dx < BOSS_CONFIG.WIDTH / 2 + BOSS_CONFIG.DODGE.REACTION_DISTANCE) {
+      if (dx < this.getBossConfig().WIDTH / 2 + this.getBossConfig().DODGE.REACTION_DISTANCE) {
         const dy = bullet.y - this.y;
         if (dy < closestDistance && dy > 0) {
           closestDistance = dy;
@@ -128,15 +135,15 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Dodge if a bullet is close
-    if (foundBullet && closestDistance < BOSS_CONFIG.DODGE.REACTION_DISTANCE) {
+    if (foundBullet && closestDistance < this.getBossConfig().DODGE.REACTION_DISTANCE) {
       this.isDodging = true;
       // Move away from the bullet
       if (closestBulletX < this.x) {
         // Bullet is to the left, move right
-        this.targetX = Math.min(GAME_CONFIG.WIDTH - BOSS_CONFIG.WIDTH / 2 - 10, this.x + 100);
+        this.targetX = Math.min(GAME_CONFIG.WIDTH - this.getBossConfig().WIDTH / 2 - 10, this.x + 100);
       } else {
         // Bullet is to the right, move left
-        this.targetX = Math.max(BOSS_CONFIG.WIDTH / 2 + 10, this.x - 100);
+        this.targetX = Math.max(this.getBossConfig().WIDTH / 2 + 10, this.x - 100);
       }
     } else {
       this.isDodging = false;
@@ -144,8 +151,8 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
       if (this.player && this.player.active) {
         this.targetX = Phaser.Math.Clamp(
           this.player.x,
-          BOSS_CONFIG.WIDTH / 2 + 10,
-          GAME_CONFIG.WIDTH - BOSS_CONFIG.WIDTH / 2 - 10
+          this.getBossConfig().WIDTH / 2 + 10,
+          GAME_CONFIG.WIDTH - this.getBossConfig().WIDTH / 2 - 10
         );
       }
     }
@@ -153,7 +160,7 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
 
   private moveTowardsTarget(): void {
     const dx = this.targetX - this.x;
-    const currentSpeed = this.isDodging ? BOSS_CONFIG.DODGE.DODGE_SPEED : this.speed;
+    const currentSpeed = this.isDodging ? this.getBossConfig().DODGE.DODGE_SPEED : this.speed;
 
     if (Math.abs(dx) > 5) {
       this.setVelocityX(Math.sign(dx) * currentSpeed);
@@ -166,7 +173,7 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
     if (!this.player || !this.bullets || !this.player.active) return;
 
     // Check fire rate
-    if (time - this.lastFireTime >= BOSS_CONFIG.SHOOTING.FIRE_RATE) {
+    if (time - this.lastFireTime >= this.getBossConfig().SHOOTING.FIRE_RATE) {
       this.shoot();
       this.lastFireTime = time;
     }
@@ -178,7 +185,7 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
     // Fire from all gun positions
     for (const gunOffset of this.gunPositions) {
       const bulletX = this.x + gunOffset;
-      const bulletY = this.y + BOSS_CONFIG.HEIGHT / 2;
+      const bulletY = this.y + this.getBossConfig().HEIGHT / 2;
 
       const bullet = this.bullets.get(bulletX, bulletY) as BossBullet;
       if (bullet) {
@@ -226,8 +233,8 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
   private createExplosion(): void {
     // Create multiple explosion bursts for dramatic effect
     for (let i = 0; i < 5; i++) {
-      const offsetX = Phaser.Math.Between(-BOSS_CONFIG.WIDTH / 3, BOSS_CONFIG.WIDTH / 3);
-      const offsetY = Phaser.Math.Between(-BOSS_CONFIG.HEIGHT / 3, BOSS_CONFIG.HEIGHT / 3);
+      const offsetX = Phaser.Math.Between(-this.getBossConfig().WIDTH / 3, this.getBossConfig().WIDTH / 3);
+      const offsetY = Phaser.Math.Between(-this.getBossConfig().HEIGHT / 3, this.getBossConfig().HEIGHT / 3);
 
       this.scene.time.delayedCall(i * 100, () => {
         const particles = this.scene.add.particles(this.x + offsetX, this.y + offsetY, 'explosion_particle', {

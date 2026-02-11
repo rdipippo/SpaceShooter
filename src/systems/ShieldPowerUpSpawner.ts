@@ -1,19 +1,23 @@
 import Phaser from 'phaser';
 import { ShieldPowerUp } from '../entities/ShieldPowerUp';
-import { ENEMY_CONFIG, SHIELD_POWERUP_CONFIG } from '../utils/Constants';
 import { Enemy } from '../entities/Enemy';
+import { GameScene } from '@/scenes/GameScene';
 
 export class ShieldPowerUpSpawner {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private powerUps!: Phaser.Physics.Arcade.Group;
   private spawnTimer?: Phaser.Time.TimerEvent;
   private spawnDelay: number;
+  private spawnRateMultiplier: number;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
+    const enemyConfig = scene.levelConfig.getEnemyConfig();
+    const shieldConfig = scene.levelConfig.getShieldPowerupConfig();
+    this.spawnRateMultiplier = shieldConfig.SPAWN_RATE_MULTIPLIER;
     // Spawn at 10% of enemy rate (10x slower than enemies)
-    this.spawnDelay = ENEMY_CONFIG.INITIAL_SPAWN_DELAY * SHIELD_POWERUP_CONFIG.SPAWN_RATE_MULTIPLIER;
-    
+    this.spawnDelay = enemyConfig.INITIAL_SPAWN_DELAY * this.spawnRateMultiplier;
+
     this.scene.events.on('enemyDied', this.handleDeadEnemy, this);
 
     this.initPowerUpGroup();
@@ -37,8 +41,12 @@ export class ShieldPowerUpSpawner {
     });
   }
   
-  private handleDeadEnemy(enemy : Enemy) {
-      this.spawnPowerUp(enemy.x, enemy.y); 
+  private static readonly ENEMY_DROP_CHANCE = 0.1;
+
+  private handleDeadEnemy(enemy: Enemy): void {
+    if (Phaser.Math.FloatBetween(0, 1) < ShieldPowerUpSpawner.ENEMY_DROP_CHANCE) {
+      this.spawnPowerUp(enemy.x, enemy.y);
+    }
   }
 
   private spawnPowerUp(x: number, y: number) {
@@ -66,8 +74,8 @@ export class ShieldPowerUpSpawner {
   }
 
   updateSpawnRate(enemySpawnDelay: number): void {
-    // Keep power-up spawn rate at 10% of enemy rate
-    this.spawnDelay = enemySpawnDelay * SHIELD_POWERUP_CONFIG.SPAWN_RATE_MULTIPLIER;
+    // Keep power-up spawn rate at configured multiplier of enemy rate
+    this.spawnDelay = enemySpawnDelay * this.spawnRateMultiplier;
 
     // Restart timer with new delay
     if (this.spawnTimer) {

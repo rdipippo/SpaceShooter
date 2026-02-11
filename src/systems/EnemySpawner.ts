@@ -2,21 +2,24 @@ import Phaser from 'phaser';
 import { Enemy } from '../entities/Enemy';
 import { EnemyBullet } from '../entities/EnemyBullet';
 import { Player } from '../entities/Player';
-import { ENEMY_CONFIG } from '../utils/Constants';
+import { GameScene } from '@/scenes/GameScene';
 
 export class EnemySpawner {
-  private scene: Phaser.Scene;
+  private scene: GameScene;
   private enemies!: Phaser.Physics.Arcade.Group;
   private enemyBullets!: Phaser.Physics.Arcade.Group;
   private player: Player | null = null;
   private spawnTimer?: Phaser.Time.TimerEvent;
   private spawnDelay: number;
   private minSpawnDelay: number;
+  private spawnDifficultyIncrease: number;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
-    this.spawnDelay = ENEMY_CONFIG.INITIAL_SPAWN_DELAY;
-    this.minSpawnDelay = ENEMY_CONFIG.MIN_SPAWN_DELAY;
+    const config = scene.levelConfig.getEnemyConfig();
+    this.spawnDelay = config.INITIAL_SPAWN_DELAY;
+    this.minSpawnDelay = config.MIN_SPAWN_DELAY;
+    this.spawnDifficultyIncrease = config.SPAWN_DIFFICULTY_INCREASE;
 
     this.initEnemyGroup();
     this.initEnemyBulletGroup();
@@ -85,7 +88,7 @@ export class EnemySpawner {
   increaseDifficulty(): void {
     // Reduce spawn delay
     if (this.spawnDelay > this.minSpawnDelay) {
-      this.spawnDelay -= ENEMY_CONFIG.SPAWN_DIFFICULTY_INCREASE;
+      this.spawnDelay -= this.spawnDifficultyIncrease;
       this.spawnDelay = Math.max(this.spawnDelay, this.minSpawnDelay);
 
       // Restart timer with new delay

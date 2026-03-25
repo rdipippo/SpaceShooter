@@ -11,6 +11,8 @@ import { EnemySpawner } from './EnemySpawner';
 import { AsteroidSpawner } from './AsteroidSpawner';
 import { ShieldPowerUpSpawner } from './ShieldPowerUpSpawner';
 import { BossSpawner } from './BossSpawner';
+import { StrikerSpawner } from './StrikerSpawner';
+import { StrikerEnemy } from '../entities/StrikerEnemy';
 
 export class CollisionManager {
   private scene: Phaser.Scene;
@@ -19,6 +21,7 @@ export class CollisionManager {
   private asteroidSpawner?: AsteroidSpawner;
   private shieldPowerUpSpawner?: ShieldPowerUpSpawner;
   private bossSpawner?: BossSpawner;
+  private strikerSpawner?: StrikerSpawner;
 
   constructor(
     scene: Phaser.Scene,
@@ -26,7 +29,8 @@ export class CollisionManager {
     enemySpawner: EnemySpawner,
     asteroidSpawner?: AsteroidSpawner,
     shieldPowerUpSpawner?: ShieldPowerUpSpawner,
-    bossSpawner?: BossSpawner
+    bossSpawner?: BossSpawner,
+    strikerSpawner?: StrikerSpawner
   ) {
     this.scene = scene;
     this.player = player;
@@ -34,6 +38,7 @@ export class CollisionManager {
     this.asteroidSpawner = asteroidSpawner;
     this.shieldPowerUpSpawner = shieldPowerUpSpawner;
     this.bossSpawner = bossSpawner;
+    this.strikerSpawner = strikerSpawner;
 
     this.setupCollisions();
   }
@@ -103,6 +108,33 @@ export class CollisionManager {
         this.player,
         this.shieldPowerUpSpawner.getPowerUps(),
         this.playerPowerUpCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+        undefined,
+        this
+      );
+    }
+
+    // Set up striker collisions if spawner exists
+    if (this.strikerSpawner) {
+      this.scene.physics.add.overlap(
+        this.player.getBullets(),
+        this.strikerSpawner.getStrikers(),
+        this.bulletStrikerCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+        undefined,
+        this
+      );
+
+      this.scene.physics.add.overlap(
+        this.player,
+        this.strikerSpawner.getStrikers(),
+        this.playerStrikerCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+        undefined,
+        this
+      );
+
+      this.scene.physics.add.overlap(
+        this.player,
+        this.strikerSpawner.getStrikerBullets(),
+        this.enemyBulletPlayerCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
         undefined,
         this
       );
@@ -349,5 +381,36 @@ export class CollisionManager {
 
     // Damage player heavily for touching boss
     player.takeDamage(1);
+  }
+
+  private bulletStrikerCollision(
+    bulletObj: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile,
+    strikerObj: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile
+  ): void {
+    const bullet = bulletObj as Bullet;
+    const striker = strikerObj as unknown as StrikerEnemy;
+
+    if (!bullet.active || !striker.active) return;
+
+    bullet.setActive(false);
+    bullet.setVisible(false);
+
+    const destroyed = striker.takeDamage(bullet.damage);
+    if (destroyed) {
+      this.scene.events.emit('enemyDestroyed', striker.scoreValue);
+    }
+  }
+
+  private playerStrikerCollision(
+    playerObj: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile,
+    strikerObj: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile
+  ): void {
+    const player = playerObj as Player;
+    const striker = strikerObj as unknown as StrikerEnemy;
+
+    if (!player.active || !striker.active) return;
+
+    player.takeDamage(1);
+    striker.takeDamage(999);
   }
 }

@@ -19,11 +19,24 @@ export class EnemyBullet extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityY(this.speed);
   }
 
+  fireDirectional(x: number, y: number, vx: number, vy: number, damage: number): void {
+    this.setPosition(x, y);
+    this.setActive(true);
+    this.setVisible(true);
+    this.setVelocity(vx, vy);
+    this.damage = damage;
+  }
+
   preUpdate(time: number, delta: number): void {
     super.preUpdate(time, delta);
 
-    // Destroy bullet if it goes off-screen (bottom)
-    if (this.y > this.scene.cameras.main.height + this.height) {
+    const cam = this.scene.cameras.main;
+    if (
+      this.y > cam.height + this.height ||
+      this.y < -this.height ||
+      this.x < -this.width ||
+      this.x > cam.width + this.width
+    ) {
       this.setActive(false);
       this.setVisible(false);
     }

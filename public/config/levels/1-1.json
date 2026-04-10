@@ -68,7 +68,7 @@
     "HEIGHT": 100,
     "SPEED": 150,
     "SCORE_VALUE": 500,
-    "SPAWN_TIME": 30,
+    "SPAWN_TIME": 180000,
     "Y_POSITION": 80,
     "SHOOTING": {
       "FIRE_RATE": 800,

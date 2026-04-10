@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { GAME_CONFIG } from '../utils/Constants';
 import { BossBullet } from './BossBullet';
 import { Player } from './Player';
 import { Bullet } from './Bullet';
@@ -140,7 +139,7 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
       // Move away from the bullet
       if (closestBulletX < this.x) {
         // Bullet is to the left, move right
-        this.targetX = Math.min(GAME_CONFIG.WIDTH - this.getBossConfig().WIDTH / 2 - 10, this.x + 100);
+        this.targetX = Math.min(this.scene.scale.width - this.getBossConfig().WIDTH / 2 - 10, this.x + 100);
       } else {
         // Bullet is to the right, move left
         this.targetX = Math.max(this.getBossConfig().WIDTH / 2 + 10, this.x - 100);
@@ -152,7 +151,7 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
         this.targetX = Phaser.Math.Clamp(
           this.player.x,
           this.getBossConfig().WIDTH / 2 + 10,
-          GAME_CONFIG.WIDTH - this.getBossConfig().WIDTH / 2 - 10
+          this.scene.scale.width - this.getBossConfig().WIDTH / 2 - 10
         );
       }
     }

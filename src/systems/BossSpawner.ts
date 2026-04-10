@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { Boss } from '../entities/Boss';
 import { BossBullet } from '../entities/BossBullet';
 import { Player } from '../entities/Player';
-import { GAME_CONFIG } from '../utils/Constants';
 import { GameScene } from '@/scenes/GameScene';
 
 export class BossSpawner {
@@ -46,7 +45,7 @@ export class BossSpawner {
     const bossConfig = this.scene.levelConfig.getBossConfig();
 
     // Spawn boss at center top of screen
-    const x = GAME_CONFIG.WIDTH / 2;
+    const x = this.scene.scale.width / 2;
     const y = bossConfig.Y_POSITION;
 
     this.boss = new Boss(this.scene, x, -1 * bossConfig.HEIGHT);
@@ -75,7 +74,7 @@ export class BossSpawner {
     this.bossSpawned = true;
     const bossConfig = this.scene.levelConfig.getBossConfig();
 
-    const x = GAME_CONFIG.WIDTH / 2;
+    const x = this.scene.scale.width / 2;
     const y = bossConfig.Y_POSITION;
 
     this.boss = new Boss(this.scene, x, y);

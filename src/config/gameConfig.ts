@@ -6,11 +6,16 @@ import { GameScene } from '../scenes/GameScene';
 import { GameOverScene } from '../scenes/GameOverScene';
 import { GAME_CONFIG } from '../utils/Constants';
 
+const isMobile = !!(window as any).Capacitor || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
   backgroundColor: GAME_CONFIG.BACKGROUND_COLOR,
-  scale: {
+  scale: isMobile ? {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  } : {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: GAME_CONFIG.WIDTH,

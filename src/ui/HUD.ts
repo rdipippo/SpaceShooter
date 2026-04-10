@@ -25,22 +25,30 @@ export class HUD {
   }
 
   private createUI(): void {
+    const width = this.scene.cameras.main.width;
+    const height = this.scene.cameras.main.height;
+
     // Score text (top-left)
     this.scoreText = this.scene.add.text(16, 16, 'Score: 0', {
       fontFamily: UI_CONFIG.FONT_FAMILY,
       fontSize: UI_CONFIG.SCORE_FONT_SIZE,
       color: '#ffffff'
     });
-    this.pauseGameText = this.scene.add.text(
-      200, 250, 'Game Paused',
-      { fontFamily: 'Arial', fontSize: 64, color: '#00ff00' }
-    ).setVisible(false);
 
+    const pauseFontSize = Math.min(64, Math.floor(width / 8));
+    this.pauseGameText = this.scene.add.text(
+      width / 2, height / 2 - 60, 'Game Paused',
+      { fontFamily: 'Arial', fontSize: pauseFontSize, color: '#00ff00' }
+    ).setOrigin(0.5).setVisible(false);
+    this.pauseGameText.setScrollFactor(0);
+    this.pauseGameText.setDepth(100);
+
+    const resetFontSize = Math.min(32, Math.floor(width / 12));
     // Reset game link (shown when paused)
     this.resetGameText = this.scene.add.text(
-      330, 360, 'Reset Game',
-      { fontFamily: 'Arial', fontSize: 32, color: '#ffffff' }
-    ).setVisible(false)
+      width / 2, height / 2 + 20, 'Reset Game',
+      { fontFamily: 'Arial', fontSize: resetFontSize, color: '#ffffff' }
+    ).setOrigin(0.5).setVisible(false)
      .setInteractive({ useHandCursor: true })
      .on('pointerdown', () => {
        // Unpause before restarting to ensure physics/timers work
@@ -78,11 +86,12 @@ export class HUD {
     this.highScoreText.setScrollFactor(0);
     this.highScoreText.setDepth(100);
 
+    const victoryFontSize = Math.min(64, Math.floor(width / 8));
     this.victoryText = this.scene.add.text(
-      this.scene.cameras.main.width / 2,
-      this.scene.cameras.main.height / 2,
+      width / 2,
+      height / 2,
       'VICTORY',
-      { fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: UI_CONFIG.TITLE_FONT_SIZE, color: '#ffffff' }
+      { fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: `${victoryFontSize}px`, color: '#ffffff' }
     ).setVisible(false);
     this.victoryText.setOrigin(0.5);
     this.victoryText.setScrollFactor(0);

@@ -19,13 +19,16 @@ export class MainMenuScene extends Phaser.Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    // Title text
-    const title = this.add.text(width / 2, height / 3, 'SPACE SHOOTER', {
+    // Title text — two lines on mobile so it always fits, one line on wider screens
+    const titleText = width < 500 ? 'SPACE\nSHOOTER' : 'SPACE SHOOTER';
+    const titleFontSize = Math.min(64, Math.floor(width / 8));
+    const title = this.add.text(width / 2, height / 3, titleText, {
       fontFamily: UI_CONFIG.FONT_FAMILY,
-      fontSize: UI_CONFIG.TITLE_FONT_SIZE,
+      fontSize: `${titleFontSize}px`,
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 6
+      strokeThickness: 6,
+      align: 'center'
     });
     title.setOrigin(0.5);
 

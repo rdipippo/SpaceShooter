@@ -4,6 +4,7 @@ import { EnemySpawner } from '../systems/EnemySpawner';
 import { AsteroidSpawner } from '../systems/AsteroidSpawner';
 import { ShieldPowerUpSpawner } from '../systems/ShieldPowerUpSpawner';
 import { BossSpawner } from '../systems/BossSpawner';
+import { StrikerSpawner } from '../systems/StrikerSpawner';
 import { CollisionManager } from '../systems/CollisionManager';
 import { ScoreManager } from '../systems/ScoreManager';
 import { HUD } from '../ui/HUD';
@@ -16,6 +17,7 @@ export class GameScene extends Phaser.Scene {
   public asteroidSpawner!: AsteroidSpawner;
   public shieldPowerUpSpawner!: ShieldPowerUpSpawner;
   public bossSpawner!: BossSpawner;
+  public strikerSpawner?: StrikerSpawner;
   public levelConfig!: LevelConfig;
 
   private level: string = "1-1";
@@ -100,8 +102,15 @@ export class GameScene extends Phaser.Scene {
     this.bossSpawner = new BossSpawner(this);
     this.bossSpawner.setPlayer(this.player);
 
+    // Create striker spawner if enabled for this level
+    const strikerConfig = this.levelConfig.getEnemyConfig().STRIKER;
+    if (strikerConfig?.ENABLED) {
+      this.strikerSpawner = new StrikerSpawner(this);
+      this.strikerSpawner.setPlayer(this.player);
+    }
+
     // Set up collision manager
-    this.collisionManager = new CollisionManager(this, this.player, this.enemySpawner, this.asteroidSpawner, this.shieldPowerUpSpawner, this.bossSpawner);
+    this.collisionManager = new CollisionManager(this, this.player, this.enemySpawner, this.asteroidSpawner, this.shieldPowerUpSpawner, this.bossSpawner, this.strikerSpawner);
 
     // Create HUD
     this.hud = new HUD(this);
@@ -121,6 +130,7 @@ export class GameScene extends Phaser.Scene {
       this.asteroidSpawner.stopSpawning();
       this.shieldPowerUpSpawner.stopSpawning();
       this.bossSpawner.stopSpawning();
+      this.strikerSpawner?.stopSpawning();
 
       const testUI = new TestUI(this);
     }
@@ -169,6 +179,7 @@ export class GameScene extends Phaser.Scene {
     if (this.scoreManager.getCurrentScore() % 100 === 0) {
       this.enemySpawner.increaseDifficulty();
       this.asteroidSpawner.increaseDifficulty();
+      this.strikerSpawner?.increaseDifficulty();
       // Keep power-up spawn rate at 10% of enemy rate
       this.shieldPowerUpSpawner.updateSpawnRate(this.enemySpawner.getSpawnDelay());
     }
@@ -182,6 +193,7 @@ export class GameScene extends Phaser.Scene {
     this.asteroidSpawner.stopSpawning();
     this.shieldPowerUpSpawner.stopSpawning();
     this.bossSpawner.stopSpawning();
+    this.strikerSpawner?.stopSpawning();
 
     // Transition to game over scene after a brief delay
     this.time.delayedCall(1000, () => {

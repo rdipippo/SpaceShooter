@@ -13,8 +13,24 @@ export interface EnemyShootingConfig {
     BULLET_DAMAGE: number;
 }
 
+export interface StrikerConfig {
+    ENABLED: boolean;
+    HEALTH: number;
+    SPEED: number;
+    DIVE_SPEED: number;
+    SCORE_VALUE: number;
+    INITIAL_SPAWN_DELAY: number;
+    MIN_SPAWN_DELAY: number;
+    SPAWN_DIFFICULTY_INCREASE: number;
+    DETECTION_RANGE: number;
+    FIRE_RATE: number;
+    BULLET_SPEED: number;
+    BULLET_DAMAGE: number;
+}
+
 export interface EnemyConfig {
     BASIC: EnemyBasicConfig;
+    STRIKER?: StrikerConfig;
     INITIAL_SPAWN_DELAY: number;
     MIN_SPAWN_DELAY: number;
     SPAWN_DIFFICULTY_INCREASE: number;

@@ -18,6 +18,20 @@ export const ENEMY_CONFIG = {
     SPEED: 100,
     SCORE_VALUE: 10
   },
+  STRIKER: {
+    ENABLED: false,
+    HEALTH: 2,
+    SPEED: 80,               // patrol descent speed
+    DIVE_SPEED: 300,          // speed during attack run
+    SCORE_VALUE: 25,
+    INITIAL_SPAWN_DELAY: 4000,
+    MIN_SPAWN_DELAY: 2000,
+    SPAWN_DIFFICULTY_INCREASE: 100,
+    DETECTION_RANGE: 350,     // range at which striker locks on and dives
+    FIRE_RATE: 600,           // ms between shots during dive
+    BULLET_SPEED: 300,
+    BULLET_DAMAGE: 1
+  },
   INITIAL_SPAWN_DELAY: 2000,  // milliseconds
   MIN_SPAWN_DELAY: 500,        // minimum spawn delay (max difficulty)
   SPAWN_DIFFICULTY_INCREASE: 50,  // decrease delay by this amount
@@ -87,6 +101,7 @@ export const BOSS_CONFIG = {
 export const COLORS = {
   PLAYER: 0x00ff00,
   ENEMY_BASIC: 0xff0000,
+  ENEMY_STRIKER: 0xff8800,
   BULLET: 0xffff00,
   ENEMY_BULLET: 0xff4444,
   STAR: 0xffffff,

@@ -68,6 +68,9 @@ export class PreloadScene extends Phaser.Scene {
     // Create shield power-up texture
     this.createShieldPowerUpTexture();
 
+    // Create striker enemy texture
+    this.createStrikerTexture();
+
     // Create boss textures
     this.createBossTexture();
     this.createBossBulletTexture();
@@ -156,6 +159,37 @@ export class PreloadScene extends Phaser.Scene {
     particleGraphics.fillCircle(3, 3, 3);
     particleGraphics.generateTexture('shield_particle', 6, 6);
     particleGraphics.destroy();
+  }
+
+  private createStrikerTexture(): void {
+    const graphics = this.add.graphics();
+    const width = 32;
+    const height = 32;
+    const cx = width / 2;
+
+    // Delta-wing body pointing down — orange, clearly distinct from the red basic enemy
+    graphics.fillStyle(COLORS.ENEMY_STRIKER);
+    graphics.beginPath();
+    graphics.moveTo(cx, height - 2);      // nose tip (bottom)
+    graphics.lineTo(cx - 15, 6);          // left wing tip
+    graphics.lineTo(cx - 5, 14);          // left inner wing
+    graphics.lineTo(cx, 10);              // center top
+    graphics.lineTo(cx + 5, 14);          // right inner wing
+    graphics.lineTo(cx + 15, 6);          // right wing tip
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Cockpit stripe
+    graphics.fillStyle(0xffcc00);
+    graphics.fillRoundedRect(cx - 3, 13, 6, 10, 2);
+
+    // Engine glow at top (two small jets)
+    graphics.fillStyle(0xffff88);
+    graphics.fillCircle(cx - 5, 7, 3);
+    graphics.fillCircle(cx + 5, 7, 3);
+
+    graphics.generateTexture('enemy_striker', width, height);
+    graphics.destroy();
   }
 
   private createBossTexture(): void {

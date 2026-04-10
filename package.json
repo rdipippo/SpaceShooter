@@ -18,6 +18,9 @@
     "cap:copy": "npx cap copy"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0",
     "canvas": "^3.2.0",
     "phaser": "^3.80.1"
   },

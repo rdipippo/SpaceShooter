@@ -1,4 +1,5 @@
 package-lock.json
+._*
 
 # Dependencies
 node_modules/

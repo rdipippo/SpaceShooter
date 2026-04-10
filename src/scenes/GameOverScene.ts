@@ -19,9 +19,10 @@ export class GameOverScene extends Phaser.Scene {
     const height = this.cameras.main.height;
 
     // Game Over text
+    const gameOverFontSize = Math.min(64, Math.floor(width / 8));
     const gameOverText = this.add.text(width / 2, height / 4, 'GAME OVER', {
       fontFamily: UI_CONFIG.FONT_FAMILY,
-      fontSize: UI_CONFIG.TITLE_FONT_SIZE,
+      fontSize: `${gameOverFontSize}px`,
       color: '#ff0000',
       stroke: '#000000',
       strokeThickness: 6
@@ -52,13 +53,14 @@ export class GameOverScene extends Phaser.Scene {
 
     // High score
     const isNewHighScore = this.finalScore === this.highScore && this.finalScore > 0;
+    const highScoreFontSize = Math.min(32, Math.floor(width / 12));
     const highScoreText = this.add.text(
       width / 2,
       height / 2 + 20,
       `High Score: ${this.highScore}${isNewHighScore ? ' - NEW!' : ''}`,
       {
         fontFamily: UI_CONFIG.FONT_FAMILY,
-        fontSize: '32px',
+        fontSize: `${highScoreFontSize}px`,
         color: isNewHighScore ? '#ffff00' : '#ffffff'
       }
     );

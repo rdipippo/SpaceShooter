@@ -141,21 +141,15 @@ export class PreloadScene extends Phaser.Scene {
     const size = 24;
     const center = size / 2;
 
-    // Draw shield icon - a plus/cross inside a circle
-    graphics.fillStyle(COLORS.SHIELD_POWERUP);
+    graphics.fillStyle(0x39ff14);
     graphics.fillCircle(center, center, 10);
-
-    // Add inner cross (health symbol)
-    graphics.fillStyle(0xffffff);
-    graphics.fillRect(center - 2, center - 6, 4, 12); // vertical bar
-    graphics.fillRect(center - 6, center - 2, 12, 4); // horizontal bar
 
     graphics.generateTexture('shield_powerup', size, size);
     graphics.destroy();
 
     // Create shield particle for collection effect
     const particleGraphics = this.add.graphics();
-    particleGraphics.fillStyle(COLORS.SHIELD_POWERUP);
+    particleGraphics.fillStyle(0x39ff14);
     particleGraphics.fillCircle(3, 3, 3);
     particleGraphics.generateTexture('shield_particle', 6, 6);
     particleGraphics.destroy();

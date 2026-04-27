@@ -239,24 +239,41 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.health -= amount;
 
-    // Flash effect
-    this.scene.tweens.add({
+    this.createExplosion();
+
+    const invulnerabilityDuration = 2000;
+    const flickerTween = this.scene.tweens.add({
       targets: this,
-      alpha: 0.5,
+      alpha: 0.2,
       duration: 100,
       yoyo: true,
-      repeat: 3
+      repeat: -1
     });
 
-    // Brief invulnerability
     this.isInvulnerable = true;
-    this.scene.time.delayedCall(1000, () => {
+    this.scene.time.delayedCall(invulnerabilityDuration, () => {
       this.isInvulnerable = false;
+      flickerTween.stop();
+      this.setAlpha(1);
     });
 
     if (this.health <= 0) {
       this.die();
     }
+  }
+
+  private createExplosion(): void {
+    const particles = this.scene.add.particles(this.x, this.y, 'explosion_particle', {
+      speed: { min: 80, max: 200 },
+      scale: { start: 1.2, end: 0 },
+      lifespan: 400,
+      quantity: 16,
+      blendMode: 'ADD'
+    });
+
+    this.scene.time.delayedCall(400, () => {
+      particles.destroy();
+    });
   }
 
   private die(): void {

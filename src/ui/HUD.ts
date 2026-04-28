@@ -1,11 +1,17 @@
 import Phaser from 'phaser';
-import { UI_CONFIG } from '../utils/Constants';
+import { PLAYER_CONFIG, UI_CONFIG } from '../utils/Constants';
 
 export class HUD {
   private scene: Phaser.Scene;
   private scoreText!: Phaser.GameObjects.Text;
-  private healthText!: Phaser.GameObjects.Text;
+  private healthLabel!: Phaser.GameObjects.Text;
+  private healthBar!: Phaser.GameObjects.Graphics;
   private highScoreText!: Phaser.GameObjects.Text;
+  private currentHealth: number = PLAYER_CONFIG.MAX_HEALTH;
+  private static readonly HEALTH_BAR_X = 100;
+  private static readonly HEALTH_BAR_Y = 56;
+  private static readonly HEALTH_BAR_WIDTH = 160;
+  private static readonly HEALTH_BAR_HEIGHT = 16;
   private pauseGameText!: Phaser.GameObjects.Text;
   private resetGameText!: Phaser.GameObjects.Text;
   private victoryText!: Phaser.GameObjects.Text;
@@ -62,14 +68,19 @@ export class HUD {
     this.scoreText.setScrollFactor(0);
     this.scoreText.setDepth(100);
 
-    // Health text (below score)
-    this.healthText = this.scene.add.text(16, 50, 'Shield: 🛡️🛡️🛡️', {
+    // Health label and neon green health bar (below score)
+    this.healthLabel = this.scene.add.text(16, 50, 'Health:', {
       fontFamily: UI_CONFIG.FONT_FAMILY,
       fontSize: UI_CONFIG.SCORE_FONT_SIZE,
       color: '#ffffff'
     });
-    this.healthText.setScrollFactor(0);
-    this.healthText.setDepth(100);
+    this.healthLabel.setScrollFactor(0);
+    this.healthLabel.setDepth(100);
+
+    this.healthBar = this.scene.add.graphics();
+    this.healthBar.setScrollFactor(0);
+    this.healthBar.setDepth(100);
+    this.drawHealthBar();
 
     // High score text (top-right)
     this.highScoreText = this.scene.add.text(
@@ -103,8 +114,31 @@ export class HUD {
   }
 
   updateHealth(health: number): void {
-    const hearts = '🛡️'.repeat(Math.max(0, health));
-    this.healthText.setText(`Shield: ${hearts}`);
+    this.currentHealth = Math.max(0, health);
+    this.drawHealthBar();
+  }
+
+  private drawHealthBar(): void {
+    const x = HUD.HEALTH_BAR_X;
+    const y = HUD.HEALTH_BAR_Y;
+    const w = HUD.HEALTH_BAR_WIDTH;
+    const h = HUD.HEALTH_BAR_HEIGHT;
+    const pct = Phaser.Math.Clamp(this.currentHealth / PLAYER_CONFIG.MAX_HEALTH, 0, 1);
+
+    this.healthBar.clear();
+
+    this.healthBar.fillStyle(0x000000, 0.6);
+    this.healthBar.fillRect(x, y, w, h);
+
+    if (pct > 0) {
+      this.healthBar.fillStyle(0x39ff14, 0.35);
+      this.healthBar.fillRect(x - 2, y - 2, w * pct + 4, h + 4);
+      this.healthBar.fillStyle(0x39ff14, 1);
+      this.healthBar.fillRect(x, y, w * pct, h);
+    }
+
+    this.healthBar.lineStyle(2, 0x39ff14, 1);
+    this.healthBar.strokeRect(x, y, w, h);
   }
 
   updateHighScore(highScore: number): void {
@@ -113,7 +147,8 @@ export class HUD {
 
   destroy(): void {
     this.scoreText.destroy();
-    this.healthText.destroy();
+    this.healthLabel.destroy();
+    this.healthBar.destroy();
     this.highScoreText.destroy();
     this.pauseGameText.destroy();
     this.resetGameText.destroy();

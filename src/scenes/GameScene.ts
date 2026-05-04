@@ -114,7 +114,6 @@ export class GameScene extends Phaser.Scene {
 
     // Create HUD
     this.hud = new HUD(this);
-    this.hud.updateHighScore(this.scoreManager.getHighScore());
     this.hud.updateScore(0);
     this.hud.updateHealth(this.player.getHealth());
 
@@ -168,12 +167,17 @@ export class GameScene extends Phaser.Scene {
 
     this.events.emit('gamePaused');
     this.hud.victory();
+
+    window.setTimeout(() => {
+      if (this.scene.isActive()) {
+        this.hud.fadeToBlackKeepVictory();
+      }
+    }, 5000);
   }
 
   private addScoreAndCheckDifficulty(scoreValue: number): void {
     this.scoreManager.addScore(scoreValue);
     this.hud.updateScore(this.scoreManager.getCurrentScore());
-    this.hud.updateHighScore(this.scoreManager.getHighScore());
 
     // Increase difficulty every 100 points
     if (this.scoreManager.getCurrentScore() % 100 === 0) {
@@ -189,6 +193,7 @@ export class GameScene extends Phaser.Scene {
     if (this.gameOver) return;
 
     this.gameOver = true;
+    this.hud.updateHealth(this.player.getHealth());
     this.enemySpawner.stopSpawning();
     this.asteroidSpawner.stopSpawning();
     this.shieldPowerUpSpawner.stopSpawning();

@@ -1,11 +1,16 @@
+import { Preferences } from '@capacitor/preferences';
+
 export class ScoreManager {
   private currentScore: number;
-  private highScore!: number;
+  private highScore: number = 0;
   private readonly HIGH_SCORE_KEY = 'spaceshooter_highscore';
+  public readonly ready: Promise<void>;
 
   constructor() {
     this.currentScore = 0;
-    this.loadHighScore();
+    // Kick off the async load. Callers that need the high score before
+    // showing it should await `ready`.
+    this.ready = this.loadHighScore();
   }
 
   addScore(points: number): void {
@@ -13,7 +18,8 @@ export class ScoreManager {
 
     if (this.currentScore > this.highScore) {
       this.highScore = this.currentScore;
-      this.saveHighScore();
+      // Fire-and-forget; persist failures are logged but non-fatal.
+      void this.saveHighScore();
     }
   }
 
@@ -29,19 +35,22 @@ export class ScoreManager {
     this.currentScore = 0;
   }
 
-  private loadHighScore(): void {
+  private async loadHighScore(): Promise<void> {
     try {
-      const stored = localStorage.getItem(this.HIGH_SCORE_KEY);
-      this.highScore = stored ? parseInt(stored, 10) : 0;
+      const { value } = await Preferences.get({ key: this.HIGH_SCORE_KEY });
+      this.highScore = value ? parseInt(value, 10) || 0 : 0;
     } catch (error) {
       console.warn('Could not load high score:', error);
       this.highScore = 0;
     }
   }
 
-  private saveHighScore(): void {
+  private async saveHighScore(): Promise<void> {
     try {
-      localStorage.setItem(this.HIGH_SCORE_KEY, this.highScore.toString());
+      await Preferences.set({
+        key: this.HIGH_SCORE_KEY,
+        value: this.highScore.toString()
+      });
     } catch (error) {
       console.warn('Could not save high score:', error);
     }

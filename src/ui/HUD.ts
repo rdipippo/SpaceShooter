@@ -6,7 +6,6 @@ export class HUD {
   private scoreText!: Phaser.GameObjects.Text;
   private healthLabel!: Phaser.GameObjects.Text;
   private healthBar!: Phaser.GameObjects.Graphics;
-  private highScoreText!: Phaser.GameObjects.Text;
   private currentHealth: number = PLAYER_CONFIG.MAX_HEALTH;
   private static readonly HEALTH_BAR_X = 100;
   private static readonly HEALTH_BAR_Y = 56;
@@ -30,12 +29,31 @@ export class HUD {
     this.victoryText.setVisible(true);
   }
 
+  public fadeToBlackKeepVictory(durationMs: number = 1500): void {
+    const width = this.scene.cameras.main.width;
+    const height = this.scene.cameras.main.height;
+
+    this.victoryText.setDepth(200);
+
+    const overlay = this.scene.add.rectangle(width / 2, height / 2, width, height, 0x000000);
+    overlay.setScrollFactor(0);
+    overlay.setDepth(150);
+    overlay.setAlpha(0);
+
+    this.scene.tweens.add({
+      targets: overlay,
+      alpha: 1,
+      duration: durationMs,
+      ease: 'Power2'
+    });
+  }
+
   private createUI(): void {
     const width = this.scene.cameras.main.width;
     const height = this.scene.cameras.main.height;
 
     // Score text (top-left)
-    this.scoreText = this.scene.add.text(16, 16, 'Score: 0', {
+    this.scoreText = this.scene.add.text(16, 16, '$0', {
       fontFamily: UI_CONFIG.FONT_FAMILY,
       fontSize: UI_CONFIG.SCORE_FONT_SIZE,
       color: '#ffffff'
@@ -82,21 +100,6 @@ export class HUD {
     this.healthBar.setDepth(100);
     this.drawHealthBar();
 
-    // High score text (top-right)
-    this.highScoreText = this.scene.add.text(
-      this.scene.cameras.main.width - 16,
-      16,
-      'High: 0',
-      {
-        fontFamily: UI_CONFIG.FONT_FAMILY,
-        fontSize: '20px',
-        color: '#ffff00'
-      }
-    );
-    this.highScoreText.setOrigin(1, 0);
-    this.highScoreText.setScrollFactor(0);
-    this.highScoreText.setDepth(100);
-
     const victoryFontSize = Math.min(64, Math.floor(width / 8));
     this.victoryText = this.scene.add.text(
       width / 2,
@@ -110,7 +113,7 @@ export class HUD {
   }
 
   updateScore(score: number): void {
-    this.scoreText.setText(`Score: ${score}`);
+    this.scoreText.setText(`\$${score}`);
   }
 
   updateHealth(health: number): void {
@@ -141,15 +144,10 @@ export class HUD {
     this.healthBar.strokeRect(x, y, w, h);
   }
 
-  updateHighScore(highScore: number): void {
-    this.highScoreText.setText(`High: ${highScore}`);
-  }
-
   destroy(): void {
     this.scoreText.destroy();
     this.healthLabel.destroy();
     this.healthBar.destroy();
-    this.highScoreText.destroy();
     this.pauseGameText.destroy();
     this.resetGameText.destroy();
   }

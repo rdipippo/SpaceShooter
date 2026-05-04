@@ -230,25 +230,69 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
   }
 
   private createExplosion(): void {
-    // Create multiple explosion bursts for dramatic effect
-    for (let i = 0; i < 5; i++) {
-      const offsetX = Phaser.Math.Between(-this.getBossConfig().WIDTH / 3, this.getBossConfig().WIDTH / 3);
-      const offsetY = Phaser.Math.Between(-this.getBossConfig().HEIGHT / 3, this.getBossConfig().HEIGHT / 3);
+    const cfg = this.getBossConfig();
+    const centerX = this.x;
+    const centerY = this.y;
+    const TOTAL_DURATION = 5000;
 
-      this.scene.time.delayedCall(i * 100, () => {
-        const particles = this.scene.add.particles(this.x + offsetX, this.y + offsetY, 'explosion_particle', {
-          speed: { min: 100, max: 300 },
-          scale: { start: 2, end: 0 },
-          lifespan: 500,
-          quantity: 20,
+    this.scene.cameras.main.shake(800, 0.015);
+    this.scene.cameras.main.flash(300, 255, 230, 180);
+
+    const emitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
+
+    const shockwave = this.scene.add.graphics();
+    shockwave.setDepth(50);
+    this.scene.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration: 600,
+      onUpdate: (tween) => {
+        const t = tween.getValue() ?? 0;
+        const radius = t * Math.max(cfg.WIDTH, cfg.HEIGHT) * 2.5;
+        shockwave.clear();
+        shockwave.lineStyle(8 * (1 - t) + 1, 0xffddaa, 1 - t);
+        shockwave.strokeCircle(centerX, centerY, radius);
+      },
+      onComplete: () => shockwave.clear()
+    });
+
+    const core = this.scene.add.particles(centerX, centerY, 'explosion_particle', {
+      speed: { min: 200, max: 600 },
+      scale: { start: 4, end: 0 },
+      alpha: { start: 1, end: 0 },
+      lifespan: 1200,
+      emitting: false,
+      blendMode: 'ADD'
+    });
+    core.explode(80);
+    emitters.push(core);
+
+    const burstCount = 12;
+    const burstSpread = 2500;
+    for (let i = 0; i < burstCount; i++) {
+      const offsetX = Phaser.Math.Between(-cfg.WIDTH / 2, cfg.WIDTH / 2);
+      const offsetY = Phaser.Math.Between(-cfg.HEIGHT / 2, cfg.HEIGHT / 2);
+      const delay = (i / burstCount) * burstSpread;
+
+      window.setTimeout(() => {
+        if (!this.scene || !this.scene.add) return;
+        const burst = this.scene.add.particles(centerX + offsetX, centerY + offsetY, 'explosion_particle', {
+          speed: { min: 150, max: 450 },
+          scale: { start: 3, end: 0 },
+          alpha: { start: 1, end: 0 },
+          lifespan: 1000,
+          emitting: false,
           blendMode: 'ADD'
         });
-
-        this.scene.time.delayedCall(500, () => {
-          particles.destroy();
-        });
-      });
+        burst.explode(35);
+        emitters.push(burst);
+      }, delay);
     }
+
+    window.setTimeout(() => {
+      shockwave.destroy();
+      emitters.forEach(e => e.destroy());
+    }, TOTAL_DURATION);
   }
 
   getHealth(): number {

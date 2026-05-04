@@ -32,7 +32,7 @@ export class MainMenuScene extends Phaser.Scene {
     });
     title.setOrigin(0.5);
 
-    // High score display
+    // High score display — initial value may be 0 while the async load runs
     const highScoreText = this.add.text(
       width / 2,
       height / 2,
@@ -44,6 +44,13 @@ export class MainMenuScene extends Phaser.Scene {
       }
     );
     highScoreText.setOrigin(0.5);
+
+    // Refresh once Capacitor Preferences has loaded the persisted value
+    this.scoreManager.ready.then(() => {
+      if (highScoreText.active) {
+        highScoreText.setText(`High Score: ${this.scoreManager.getHighScore()}`);
+      }
+    });
 
     // Start button
     const startButton = this.add.text(width / 2, height * 2 / 3, 'TAP TO START', {

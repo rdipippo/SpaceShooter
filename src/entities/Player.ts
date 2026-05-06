@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { PLAYER_CONFIG } from '../utils/Constants';
 import { Bullet } from './Bullet';
+import { emitBurst } from '../utils/Effects';
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private health: number;
@@ -263,16 +264,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private createExplosion(): void {
-    const particles = this.scene.add.particles(this.x, this.y, 'explosion_particle', {
+    emitBurst(this.scene, this.x, this.y, 'explosion_particle', {
       speed: { min: 80, max: 200 },
       scale: { start: 1.2, end: 0 },
       lifespan: 400,
       quantity: 16,
       blendMode: 'ADD'
-    });
-
-    this.scene.time.delayedCall(400, () => {
-      particles.destroy();
     });
   }
 

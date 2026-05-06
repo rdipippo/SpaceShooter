@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameScene } from '@/scenes/GameScene';
-import { ShieldPowerupConfig } from '@/utils/LevelConfig';
+import { emitBurst, respawnSprite } from '@/utils/Effects';
 
 export class ShieldPowerUp extends Phaser.Physics.Arcade.Sprite {
   private speed: number;
@@ -9,7 +9,7 @@ export class ShieldPowerUp extends Phaser.Physics.Arcade.Sprite {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'shield_powerup');
 
-    const config = this.getShieldConfig();
+    const config = (scene as GameScene).levelConfig.getShieldPowerupConfig();
     this.speed = config.SPEED;
     this.healAmount = config.HEAL_AMOUNT;
 
@@ -17,15 +17,8 @@ export class ShieldPowerUp extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
   }
 
-  private getShieldConfig(): ShieldPowerupConfig {
-    return (this.scene as GameScene).levelConfig.getShieldPowerupConfig();
-  }
-
   spawn(x: number, y: number): void {
-    this.setTexture('shield_powerup');
-    this.setPosition(x, y);
-    this.setActive(true);
-    this.setVisible(true);
+    respawnSprite(this, x, y, 'shield_powerup');
 
     // Ensure physics body is enabled when reused from pool
     const body = this.body as Phaser.Physics.Arcade.Body;
@@ -61,18 +54,12 @@ export class ShieldPowerUp extends Phaser.Physics.Arcade.Sprite {
   }
 
   private createCollectionEffect(): void {
-    // Create particle effect for collection
-    const particles = this.scene.add.particles(this.x, this.y, 'shield_particle', {
+    emitBurst(this.scene, this.x, this.y, 'shield_particle', {
       speed: { min: 30, max: 80 },
       scale: { start: 1, end: 0 },
       lifespan: 200,
       quantity: 8,
       blendMode: 'ADD'
-    });
-
-    // Auto-destroy particles after effect
-    this.scene.time.delayedCall(200, () => {
-      particles.destroy();
     });
   }
 }

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GameScene } from '@/scenes/GameScene';
 import { AsteroidConfig, AsteroidSizeConfig } from '@/utils/LevelConfig';
+import { emitBurst, respawnSprite } from '@/utils/Effects';
 
 export type AsteroidSize = 'small' | 'medium' | 'large';
 
@@ -11,30 +12,25 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
   public scoreValue!: number;
   private asteroidSize!: AsteroidSize;
   private lastAsteroidCollisionDamageTime: number = 0;
+  private readonly cfg: AsteroidConfig;
 
   constructor(scene: Phaser.Scene, x: number, y: number, size: AsteroidSize = 'medium') {
     super(scene, x, y, `asteroid_${size}`);
 
+    this.cfg = (scene as GameScene).levelConfig.getAsteroidConfig();
     this.asteroidSize = size;
     this.setAsteroidProperties(size);
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    const asteroidConfig = this.getAsteroidConfig();
-
     // Enable physics body settings
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
-    body.setBounce(asteroidConfig.BOUNCE, asteroidConfig.BOUNCE);
+    body.setBounce(this.cfg.BOUNCE, this.cfg.BOUNCE);
 
     // Set circular body size based on asteroid radius
-    const config = this.getSizeConfig(size);
-    body.setCircle(config.RADIUS);
-  }
-
-  private getAsteroidConfig(): AsteroidConfig {
-    return (this.scene as GameScene).levelConfig.getAsteroidConfig();
+    body.setCircle(this.getSizeConfig(size).RADIUS);
   }
 
   private setAsteroidProperties(size: AsteroidSize): void {
@@ -44,14 +40,13 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
   }
 
   private getSizeConfig(size: AsteroidSize): AsteroidSizeConfig {
-    const config = this.getAsteroidConfig();
     switch (size) {
       case 'small':
-        return config.SMALL;
+        return this.cfg.SMALL;
       case 'medium':
-        return config.MEDIUM;
+        return this.cfg.MEDIUM;
       case 'large':
-        return config.LARGE;
+        return this.cfg.LARGE;
     }
   }
 
@@ -68,28 +63,20 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
     this.asteroidSize = size;
     this.setAsteroidProperties(size);
     this.lastAsteroidCollisionDamageTime = 0;
-    this.setTexture(`asteroid_${size}`);
-    this.setPosition(x, y);
-    this.setActive(true);
-    this.setVisible(true);
+    respawnSprite(this, x, y, `asteroid_${size}`);
 
-    const asteroidConfig = this.getAsteroidConfig();
     const sizeConfig = this.getSizeConfig(size);
 
     // Set random velocity in any direction
     const speed = Phaser.Math.Between(sizeConfig.MIN_SPEED, sizeConfig.MAX_SPEED);
     const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-    const velocityX = Math.cos(angle) * speed;
-    const velocityY = Math.sin(angle) * speed;
-
-    this.setVelocity(velocityX, velocityY);
+    this.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
 
     // Set random angular velocity (rotation)
-    const angularVelocity = Phaser.Math.Between(
-      -asteroidConfig.ANGULAR_VELOCITY_RANGE,
-      asteroidConfig.ANGULAR_VELOCITY_RANGE
-    );
-    this.setAngularVelocity(angularVelocity);
+    this.setAngularVelocity(Phaser.Math.Between(
+      -this.cfg.ANGULAR_VELOCITY_RANGE,
+      this.cfg.ANGULAR_VELOCITY_RANGE
+    ));
 
     // Reset alpha in case it was hit before
     this.setAlpha(1);
@@ -97,7 +84,7 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
     // Configure physics body
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
-    body.setBounce(asteroidConfig.BOUNCE, asteroidConfig.BOUNCE);
+    body.setBounce(this.cfg.BOUNCE, this.cfg.BOUNCE);
 
     // Set circular body size based on asteroid radius
     body.setCircle(sizeConfig.RADIUS);
@@ -146,21 +133,15 @@ export class Asteroid extends Phaser.Physics.Arcade.Sprite {
   }
 
   private createExplosion(): void {
-    // Create particle explosion scaled to asteroid size
-    const config = this.getSizeConfig(this.asteroidSize);
-    const particleCount = config.RADIUS;
+    const particleCount = this.getSizeConfig(this.asteroidSize).RADIUS;
 
-    const particles = this.scene.add.particles(this.x, this.y, 'asteroid_particle', {
+    emitBurst(this.scene, this.x, this.y, 'asteroid_particle', {
       speed: { min: 30, max: 100 },
       scale: { start: 0.8, end: 0 },
       lifespan: 400,
       quantity: particleCount,
       blendMode: 'ADD',
       tint: 0x8b7355
-    });
-
-    this.scene.time.delayedCall(400, () => {
-      particles.destroy();
     });
   }
 

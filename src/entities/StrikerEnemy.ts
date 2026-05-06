@@ -3,6 +3,7 @@ import { EnemyBullet } from './EnemyBullet';
 import { Player } from './Player';
 import { GameScene } from '@/scenes/GameScene';
 import { StrikerConfig } from '@/utils/LevelConfig';
+import { emitBurst, flashTint, respawnSprite } from '@/utils/Effects';
 
 const enum StrikerState {
   PATROL = 'PATROL',
@@ -23,15 +24,13 @@ export class StrikerEnemy extends Phaser.Physics.Arcade.Sprite {
   private fireRate: number = 600;
   private bulletSpeed: number = 300;
   private bulletDamage: number = 1;
+  private readonly cfg: StrikerConfig | undefined;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'enemy_striker');
+    this.cfg = (scene as GameScene).levelConfig.getEnemyConfig().STRIKER;
     scene.add.existing(this);
     scene.physics.add.existing(this);
-  }
-
-  private getConfig(): StrikerConfig | undefined {
-    return (this.scene as GameScene).levelConfig.getEnemyConfig().STRIKER;
   }
 
   setShootingTargets(player: Player, bullets: Phaser.Physics.Arcade.Group): void {
@@ -40,22 +39,18 @@ export class StrikerEnemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   spawn(x: number, y: number): void {
-    const config = this.getConfig();
-    if (config) {
-      this.health = config.HEALTH;
-      this.patrolSpeed = config.SPEED;
-      this.diveSpeed = config.DIVE_SPEED;
-      this.scoreValue = config.SCORE_VALUE;
-      this.detectionRange = config.DETECTION_RANGE;
-      this.fireRate = config.FIRE_RATE;
-      this.bulletSpeed = config.BULLET_SPEED;
-      this.bulletDamage = config.BULLET_DAMAGE;
+    if (this.cfg) {
+      this.health = this.cfg.HEALTH;
+      this.patrolSpeed = this.cfg.SPEED;
+      this.diveSpeed = this.cfg.DIVE_SPEED;
+      this.scoreValue = this.cfg.SCORE_VALUE;
+      this.detectionRange = this.cfg.DETECTION_RANGE;
+      this.fireRate = this.cfg.FIRE_RATE;
+      this.bulletSpeed = this.cfg.BULLET_SPEED;
+      this.bulletDamage = this.cfg.BULLET_DAMAGE;
     }
 
-    this.setTexture('enemy_striker');
-    this.setPosition(x, y);
-    this.setActive(true);
-    this.setVisible(true);
+    respawnSprite(this, x, y, 'enemy_striker');
     this.setAlpha(1);
     this.clearTint();
     this.strikerState = StrikerState.PATROL;
@@ -164,11 +159,7 @@ export class StrikerEnemy extends Phaser.Physics.Arcade.Sprite {
       return true;
     }
 
-    // Flash white on hit
-    this.setTint(0xffffff);
-    this.scene.time.delayedCall(80, () => {
-      if (this.active) this.clearTint();
-    });
+    flashTint(this, 0xffffff, 80);
 
     return false;
   }
@@ -180,16 +171,12 @@ export class StrikerEnemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   private createExplosion(): void {
-    const particles = this.scene.add.particles(this.x, this.y, 'explosion_particle', {
+    emitBurst(this.scene, this.x, this.y, 'explosion_particle', {
       speed: { min: 80, max: 200 },
       scale: { start: 1.5, end: 0 },
       lifespan: 400,
       quantity: 15,
       blendMode: 'ADD'
-    });
-
-    this.scene.time.delayedCall(400, () => {
-      particles.destroy();
     });
   }
 }

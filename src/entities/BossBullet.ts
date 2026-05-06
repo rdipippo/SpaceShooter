@@ -1,31 +1,12 @@
 import Phaser from 'phaser';
 import { GameScene } from '@/scenes/GameScene';
+import { BaseBullet } from './BaseBullet';
 
-export class BossBullet extends Phaser.Physics.Arcade.Sprite {
-  private speed: number;
-  public damage: number;
-
+export class BossBullet extends BaseBullet {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'boss_bullet');
     const config = (scene as GameScene).levelConfig.getBossConfig();
     this.speed = config.SHOOTING.BULLET_SPEED;
     this.damage = config.SHOOTING.BULLET_DAMAGE;
-  }
-
-  fire(x: number, y: number): void {
-    this.setPosition(x, y);
-    this.setActive(true);
-    this.setVisible(true);
-    this.setVelocityY(this.speed);
-  }
-
-  preUpdate(time: number, delta: number): void {
-    super.preUpdate(time, delta);
-
-    // Destroy bullet if it goes off-screen (bottom)
-    if (this.y > this.scene.cameras.main.height + this.height) {
-      this.setActive(false);
-      this.setVisible(false);
-    }
   }
 }

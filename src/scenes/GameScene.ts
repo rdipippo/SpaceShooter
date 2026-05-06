@@ -10,6 +10,8 @@ import { ScoreManager } from '../systems/ScoreManager';
 import { HUD } from '../ui/HUD';
 import { TestUI } from '@/ui/TestUI';
 import { LevelConfig, LevelConfigData } from '@/utils/LevelConfig';
+import { bindSceneEvents, unbindSceneEvents, SceneEventMap } from '@/utils/SceneEvents';
+import { Starfield } from '@/ui/Starfield';
 
 export class GameScene extends Phaser.Scene {
   public player!: Player;
@@ -25,9 +27,10 @@ export class GameScene extends Phaser.Scene {
   private collisionManager!: CollisionManager;
   private hud!: HUD;
   private gameOver: boolean = false;
-  private stars: Phaser.GameObjects.TileSprite | null = null;
+  private stars: Starfield | null = null;
   private paused: boolean = false;
   private testMode: boolean = false;
+  private eventMap!: SceneEventMap;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -50,11 +53,13 @@ export class GameScene extends Phaser.Scene {
     this.gameOver = false;
     this.paused = false;
 
-    // Remove any existing event listeners to prevent duplicates on restart
-    this.events.off('enemyDestroyed', this.handleEnemyDestroyed, this);
-    this.events.off('asteroidDestroyed', this.handleAsteroidDestroyed, this);
-    this.events.off('bossDestroyed', this.handleBossDestroyed, this);
-    this.events.off('playerDied', this.handlePlayerDied, this);
+    this.eventMap = {
+      enemyDestroyed: this.handleEnemyDestroyed,
+      asteroidDestroyed: this.handleAsteroidDestroyed,
+      bossDestroyed: this.handleBossDestroyed,
+      playerDied: this.handlePlayerDied,
+    };
+    unbindSceneEvents(this, this, this.eventMap);
 
     // Set up Enter key for pause/resume
     if (this.input.keyboard) {
@@ -76,7 +81,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Create scrolling starfield background
-    this.createStarfield();
+    this.stars = new Starfield(this, { starCount: 150, scrollSpeed: 2, jitterAlpha: true });
 
     // Initialize score manager
     this.scoreManager = new ScoreManager();
@@ -117,11 +122,7 @@ export class GameScene extends Phaser.Scene {
     this.hud.updateScore(0);
     this.hud.updateHealth(this.player.getHealth());
 
-    // Set up event listeners
-    this.events.on('enemyDestroyed', this.handleEnemyDestroyed, this);
-    this.events.on('asteroidDestroyed', this.handleAsteroidDestroyed, this);
-    this.events.on('bossDestroyed', this.handleBossDestroyed, this);
-    this.events.on('playerDied', this.handlePlayerDied, this);
+    bindSceneEvents(this, this, this.eventMap);
 
     // Test mode setup
     if (this.testMode) {
@@ -139,9 +140,7 @@ export class GameScene extends Phaser.Scene {
     if (this.gameOver || this.paused) return;
 
     // Scroll the starfield
-    if (this.stars) {
-      this.stars.tilePositionY -= 2;
-    }
+    this.stars?.update();
 
     // Update player
     if (this.player.active) {
@@ -209,38 +208,7 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private createStarfield(): void {
-    const width = this.cameras.main.width;
-    const height = this.cameras.main.height;
-
-    // Create a graphics object to generate star texture
-    const graphics = this.add.graphics();
-    graphics.fillStyle(0xffffff);
-
-    // Draw random stars
-    for (let i = 0; i < 150; i++) {
-      const x = Phaser.Math.Between(0, width);
-      const y = Phaser.Math.Between(0, height);
-      const size = Phaser.Math.Between(1, 2);
-      const alpha = Phaser.Math.FloatBetween(0.3, 1);
-      graphics.fillStyle(0xffffff, alpha);
-      graphics.fillCircle(x, y, size);
-    }
-
-    graphics.generateTexture('game_starfield', width, height);
-    graphics.destroy();
-
-    // Create tile sprite for scrolling effect
-    this.stars = this.add.tileSprite(0, 0, width, height, 'game_starfield');
-    this.stars.setOrigin(0, 0);
-    this.stars.setDepth(-1);
-  }
-
   shutdown(): void {
-    // Clean up event listeners
-    this.events.off('enemyDestroyed', this.handleEnemyDestroyed, this);
-    this.events.off('asteroidDestroyed', this.handleAsteroidDestroyed, this);
-    this.events.off('bossDestroyed', this.handleBossDestroyed, this);
-    this.events.off('playerDied', this.handlePlayerDied, this);
+    if (this.eventMap) unbindSceneEvents(this, this, this.eventMap);
   }
 }

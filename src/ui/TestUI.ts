@@ -1,122 +1,115 @@
 import { GameScene } from '@/scenes/GameScene';
 import Phaser from 'phaser';
 
+const BUTTON_STYLE: Phaser.Types.GameObjects.Text.TextStyle = {
+  fontFamily: 'Arial',
+  fontSize: '14px',
+  color: '#ffffff',
+  backgroundColor: '#333333',
+  padding: { x: 10, y: 8 }
+};
+
+const BG_NORMAL = '#333333';
+const BG_HOVER = '#555555';
+const BG_TOGGLED = '#006600';
+
+function createTestButton(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  label: string,
+  onClick: () => void
+): Phaser.GameObjects.Text {
+  const btn = scene.add.text(x, y, label, BUTTON_STYLE);
+  btn.setOrigin(0.5);
+  btn.setInteractive({ useHandCursor: true });
+  btn.setDepth(100);
+  btn.on('pointerover', () => btn.setStyle({ backgroundColor: BG_HOVER }));
+  btn.on('pointerout', () => btn.setStyle({ backgroundColor: BG_NORMAL }));
+  btn.on('pointerdown', (
+    _pointer: Phaser.Input.Pointer,
+    _localX: number,
+    _localY: number,
+    event: Phaser.Types.Input.EventData
+  ) => {
+    event.stopPropagation();
+    onClick();
+  });
+  return btn;
+}
+
+function createToggleButton(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  label: string,
+  isOn: () => boolean,
+  onToggle: (next: boolean) => void
+): Phaser.GameObjects.Text {
+  const btn = scene.add.text(x, y, label, BUTTON_STYLE);
+  btn.setOrigin(0.5);
+  btn.setInteractive({ useHandCursor: true });
+  btn.setDepth(100);
+
+  const restingBg = () => (isOn() ? BG_TOGGLED : BG_NORMAL);
+
+  btn.on('pointerover', () => btn.setStyle({ backgroundColor: BG_HOVER }));
+  btn.on('pointerout', () => btn.setStyle({ backgroundColor: restingBg() }));
+  btn.on('pointerdown', (
+    _pointer: Phaser.Input.Pointer,
+    _localX: number,
+    _localY: number,
+    event: Phaser.Types.Input.EventData
+  ) => {
+    event.stopPropagation();
+    const next = !isOn();
+    onToggle(next);
+    btn.setStyle({ backgroundColor: next ? BG_TOGGLED : BG_NORMAL });
+  });
+
+  return btn;
+}
+
 export class TestUI {
-     constructor(scene: GameScene) {
-        const buttonStyle = {
-            fontFamily: 'Arial',
-            fontSize: '14px',
-            color: '#ffffff',
-            backgroundColor: '#333333',
-            padding: { x: 10, y: 8 }
-        };
+  constructor(scene: GameScene) {
+    const buttonX = 70;
+    const buttonSpacing = 50;
+    let buttonY = 120;
 
-        const buttonX = 70;
-        let buttonY = 120;
-        const buttonSpacing = 50;
-
-        // Test mode label
-        const label = scene.add.text(10, 80, 'TEST MODE', {
-            fontFamily: 'Arial',
-            fontSize: '16px',
-            color: '#ff9900'
-        });
-        label.setDepth(100);
-
-        // Asteroid button
-        const asteroidBtn = scene.add.text(buttonX, buttonY, 'Asteroid', buttonStyle);
-            asteroidBtn.setOrigin(0.5);
-            asteroidBtn.setInteractive({ useHandCursor: true });
-            asteroidBtn.setDepth(100);
-            asteroidBtn.on('pointerover', () => asteroidBtn.setStyle({ backgroundColor: '#555555' }));
-            asteroidBtn.on('pointerout', () => asteroidBtn.setStyle({ backgroundColor: '#333333' }));
-            asteroidBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-            event.stopPropagation();
-            this.spawnTestAsteroid(scene);
-        });
-
-        buttonY += buttonSpacing;
-
-        // Enemy button
-        const enemyBtn = scene.add.text(buttonX, buttonY, 'Enemy', buttonStyle);
-            enemyBtn.setOrigin(0.5);
-            enemyBtn.setInteractive({ useHandCursor: true });
-            enemyBtn.setDepth(100);
-            enemyBtn.on('pointerover', () => enemyBtn.setStyle({ backgroundColor: '#555555' }));
-            enemyBtn.on('pointerout', () => enemyBtn.setStyle({ backgroundColor: '#333333' }));
-            enemyBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-            event.stopPropagation();
-            this.spawnTestEnemy(scene);
-        });
-
-        buttonY += buttonSpacing;
-
-        // Shield button
-        const shieldBtn = scene.add.text(buttonX, buttonY, 'Shield', buttonStyle);
-            shieldBtn.setOrigin(0.5);
-            shieldBtn.setInteractive({ useHandCursor: true });
-            shieldBtn.setDepth(100);
-            shieldBtn.on('pointerover', () => shieldBtn.setStyle({ backgroundColor: '#555555' }));
-            shieldBtn.on('pointerout', () => shieldBtn.setStyle({ backgroundColor: '#333333' }));
-            shieldBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-            event.stopPropagation();
-            this.spawnTestShield(scene);
-        });
-
-        buttonY += buttonSpacing;
-
-        // Boss button
-        const bossBtn = scene.add.text(buttonX, buttonY, 'Boss', buttonStyle);
-            bossBtn.setOrigin(0.5);
-            bossBtn.setInteractive({ useHandCursor: true });
-            bossBtn.setDepth(100);
-            bossBtn.on('pointerover', () => bossBtn.setStyle({ backgroundColor: '#555555' }));
-            bossBtn.on('pointerout', () => bossBtn.setStyle({ backgroundColor: '#333333' }));
-            bossBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-            event.stopPropagation();
-            this.spawnTestBoss(scene);
-        });
-
-        buttonY += buttonSpacing;
-
-        // Invincible button
-        const invincibleBtn = scene.add.text(buttonX, buttonY, 'Invincible', buttonStyle);
-        invincibleBtn.setOrigin(0.5);
-        invincibleBtn.setInteractive({ useHandCursor: true });
-        invincibleBtn.setDepth(100);
-        invincibleBtn.on('pointerover', () => invincibleBtn.setStyle({ backgroundColor: '#555555' }));
-        invincibleBtn.on('pointerout', () => {
-        if (scene.player.getInvincible()) {
-            invincibleBtn.setStyle({ backgroundColor: '#006600' });
-        } else {
-            invincibleBtn.setStyle({ backgroundColor: '#333333' });
-        }
-        });
-        invincibleBtn.on('pointerdown', (pointer: Phaser.Input.Pointer, localX: number, localY: number, event: Phaser.Types.Input.EventData) => {
-        event.stopPropagation();
-        const newState = !scene.player.getInvincible();
-        scene.player.setInvincible(newState);
-        if (newState) {
-            invincibleBtn.setStyle({ backgroundColor: '#006600' });
-        } else {
-            invincibleBtn.setStyle({ backgroundColor: '#333333' });
-        }
+    const label = scene.add.text(10, 80, 'TEST MODE', {
+      fontFamily: 'Arial',
+      fontSize: '16px',
+      color: '#ff9900'
     });
-  }
+    label.setDepth(100);
 
-  private spawnTestAsteroid(scene: GameScene): void {
-    scene.asteroidSpawner.spawnSingle();
-  }
+    createTestButton(scene, buttonX, buttonY, 'Asteroid', () =>
+      scene.asteroidSpawner.spawnSingle()
+    );
+    buttonY += buttonSpacing;
 
-  private spawnTestEnemy(scene: GameScene): void {
-    scene.enemySpawner.spawnSingle();
-  }
+    createTestButton(scene, buttonX, buttonY, 'Enemy', () =>
+      scene.enemySpawner.spawnSingle()
+    );
+    buttonY += buttonSpacing;
 
-  private spawnTestShield(scene: GameScene): void {
-    scene.shieldPowerUpSpawner.spawnSingle();
-  }
+    createTestButton(scene, buttonX, buttonY, 'Shield', () =>
+      scene.shieldPowerUpSpawner.spawnSingle()
+    );
+    buttonY += buttonSpacing;
 
-  private spawnTestBoss(scene: GameScene): void {
-    scene.bossSpawner.spawnSingle();
+    createTestButton(scene, buttonX, buttonY, 'Boss', () =>
+      scene.bossSpawner.spawnSingle()
+    );
+    buttonY += buttonSpacing;
+
+    createToggleButton(
+      scene,
+      buttonX,
+      buttonY,
+      'Invincible',
+      () => scene.player.getInvincible(),
+      (next) => scene.player.setInvincible(next)
+    );
   }
 }

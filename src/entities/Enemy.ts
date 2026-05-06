@@ -3,6 +3,7 @@ import { EnemyBullet } from './EnemyBullet';
 import { Player } from './Player';
 import { GameScene } from '@/scenes/GameScene';
 import { EnemyConfig } from '@/utils/LevelConfig';
+import { emitBurst, respawnSprite } from '@/utils/Effects';
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private health!: number;
@@ -11,18 +12,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private lastFireTime: number = 0;
   private player: Player | null = null;
   private bullets: Phaser.Physics.Arcade.Group | null = null;
+  private readonly cfg: EnemyConfig;
 
   constructor(scene: Phaser.Scene, x: number, y: number, type: string = 'basic') {
     super(scene, x, y, `enemy_${type}`);
 
+    this.cfg = (scene as GameScene).levelConfig.getEnemyConfig();
     this.setEnemyProperties(type);
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
-  }
-
-  private getEnemyConfig(): EnemyConfig {
-    return (this.scene as GameScene).levelConfig.getEnemyConfig();
   }
 
   setShootingTargets(player: Player, bullets: Phaser.Physics.Arcade.Group): void {
@@ -31,12 +30,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   private setEnemyProperties(type: string): void {
-    const config = this.getEnemyConfig();
     switch (type) {
       case 'basic':
-        this.health = config.BASIC.HEALTH;
-        this.speed = config.BASIC.SPEED;
-        this.scoreValue = config.BASIC.SCORE_VALUE;
+        this.health = this.cfg.BASIC.HEALTH;
+        this.speed = this.cfg.BASIC.SPEED;
+        this.scoreValue = this.cfg.BASIC.SCORE_VALUE;
         break;
       default:
         this.health = 1;
@@ -46,10 +44,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   spawn(x: number, y: number): void {
-    this.setTexture('enemy_basic');
-    this.setPosition(x, y);
-    this.setActive(true);
-    this.setVisible(true);
+    respawnSprite(this, x, y, 'enemy_basic');
     this.setVelocityY(this.speed);
     this.lastFireTime = 0;
   }
@@ -71,17 +66,15 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private tryShootAtPlayer(time: number): void {
     if (!this.player || !this.bullets || !this.player.active) return;
 
-    const config = this.getEnemyConfig();
-
     // Calculate distance to player
     const dx = this.player.x - this.x;
     const dy = this.player.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     // Only shoot if player is within detection range and below the enemy
-    if (distance <= config.SHOOTING.DETECTION_RANGE && dy > 0) {
+    if (distance <= this.cfg.SHOOTING.DETECTION_RANGE && dy > 0) {
       // Check fire rate
-      if (time - this.lastFireTime >= config.SHOOTING.FIRE_RATE) {
+      if (time - this.lastFireTime >= this.cfg.SHOOTING.FIRE_RATE) {
         this.shoot();
         this.lastFireTime = time;
       }
@@ -120,18 +113,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   private createExplosion(): void {
-    // Create particle explosion
-    const particles = this.scene.add.particles(this.x, this.y, 'explosion_particle', {
+    emitBurst(this.scene, this.x, this.y, 'explosion_particle', {
       speed: { min: 50, max: 150 },
       scale: { start: 1, end: 0 },
       lifespan: 300,
       quantity: 10,
       blendMode: 'ADD'
-    });
-
-    // Auto-destroy particles after explosion
-    this.scene.time.delayedCall(300, () => {
-      particles.destroy();
     });
   }
 }

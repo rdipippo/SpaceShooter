@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, ASTEROID_CONFIG, BOSS_CONFIG } from '../utils/Constants';
+import { COLORS, TEXTURE_CONFIG } from '../utils/Constants';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -54,9 +54,9 @@ export class PreloadScene extends Phaser.Scene {
     this.createEnemyBulletTexture();
 
     // Create asteroid textures for all sizes
-    this.createAsteroidTexture('small', ASTEROID_CONFIG.SMALL.RADIUS);
-    this.createAsteroidTexture('medium', ASTEROID_CONFIG.MEDIUM.RADIUS);
-    this.createAsteroidTexture('large', ASTEROID_CONFIG.LARGE.RADIUS);
+    this.createAsteroidTexture('small', TEXTURE_CONFIG.ASTEROID.SMALL.RADIUS);
+    this.createAsteroidTexture('medium', TEXTURE_CONFIG.ASTEROID.MEDIUM.RADIUS);
+    this.createAsteroidTexture('large', TEXTURE_CONFIG.ASTEROID.LARGE.RADIUS);
 
     // Create asteroid particle
     const particleGraphics = this.add.graphics();
@@ -188,8 +188,8 @@ export class PreloadScene extends Phaser.Scene {
 
   private createBossTexture(): void {
     const graphics = this.add.graphics();
-    const width = BOSS_CONFIG.WIDTH;
-    const height = BOSS_CONFIG.HEIGHT;
+    const width = TEXTURE_CONFIG.BOSS.WIDTH;
+    const height = TEXTURE_CONFIG.BOSS.HEIGHT;
     const centerX = width / 2;
     const centerY = height / 2;
 
@@ -222,7 +222,7 @@ export class PreloadScene extends Phaser.Scene {
     graphics.fillCircle(centerX, centerY - 5, 8);
 
     // Gun turrets (5 guns spread across)
-    const gunCount = BOSS_CONFIG.SHOOTING.GUN_COUNT;
+    const gunCount = TEXTURE_CONFIG.BOSS.GUN_COUNT;
     const gunSpacing = width / (gunCount + 1);
     graphics.fillStyle(0xcc00cc);
     for (let i = 1; i <= gunCount; i++) {

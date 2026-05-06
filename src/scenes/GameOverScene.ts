@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { UI_CONFIG } from '../utils/Constants';
+import { createMenuButton } from '../ui/MenuButton';
 
 export class GameOverScene extends Phaser.Scene {
   private finalScore: number = 0;
@@ -78,41 +79,33 @@ export class GameOverScene extends Phaser.Scene {
     }
 
     // Restart button
-    const restartText = this.add.text(width / 2, height * 3 / 4, 'TAP TO RESTART', {
-      fontFamily: UI_CONFIG.FONT_FAMILY,
-      fontSize: UI_CONFIG.MENU_FONT_SIZE,
-      color: '#00ff00'
-    });
-    restartText.setOrigin(0.5);
-    restartText.setInteractive({ useHandCursor: true });
-
-    // Blinking effect
-    this.tweens.add({
-      targets: restartText,
-      alpha: 0.3,
-      duration: 500,
-      yoyo: true,
-      repeat: -1
-    });
+    createMenuButton(
+      this,
+      width / 2,
+      (height * 3) / 4,
+      'TAP TO RESTART',
+      () => this.scene.start('GameScene'),
+      {
+        fontFamily: UI_CONFIG.FONT_FAMILY,
+        fontSize: UI_CONFIG.MENU_FONT_SIZE,
+        color: '#00ff00',
+        blink: true
+      }
+    );
 
     // Menu button
-    const menuText = this.add.text(width / 2, height * 3 / 4 + 60, 'Main Menu', {
-      fontFamily: UI_CONFIG.FONT_FAMILY,
-      fontSize: '24px',
-      color: '#aaaaaa'
-    });
-    menuText.setOrigin(0.5);
-    menuText.setInteractive({ useHandCursor: true });
-
-    // Click/tap to restart
-    restartText.on('pointerdown', () => {
-      this.scene.start('GameScene');
-    });
-
-    // Click/tap to go to menu
-    menuText.on('pointerdown', () => {
-      this.scene.start('MainMenuScene');
-    });
+    createMenuButton(
+      this,
+      width / 2,
+      (height * 3) / 4 + 60,
+      'Main Menu',
+      () => this.scene.start('MainMenuScene'),
+      {
+        fontFamily: UI_CONFIG.FONT_FAMILY,
+        fontSize: '24px',
+        color: '#aaaaaa'
+      }
+    );
 
     // Also allow spacebar to restart
     if (this.input.keyboard) {

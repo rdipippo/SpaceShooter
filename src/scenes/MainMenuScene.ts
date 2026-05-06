@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { ScoreManager } from '../systems/ScoreManager';
 import { UI_CONFIG } from '../utils/Constants';
+import { Starfield } from '../ui/Starfield';
+import { createMenuButton } from '../ui/MenuButton';
 
 export class MainMenuScene extends Phaser.Scene {
   private scoreManager!: ScoreManager;
-  private stars: Phaser.GameObjects.TileSprite | null = null;
+  private stars: Starfield | null = null;
 
   constructor() {
     super({ key: 'MainMenuScene' });
@@ -14,7 +16,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.scoreManager = new ScoreManager();
 
     // Create scrolling starfield background
-    this.createStarfield();
+    this.stars = new Starfield(this, { starCount: 100, scrollSpeed: 1 });
 
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
@@ -53,43 +55,35 @@ export class MainMenuScene extends Phaser.Scene {
     });
 
     // Start button
-    const startButton = this.add.text(width / 2, height * 2 / 3, 'TAP TO START', {
-      fontFamily: UI_CONFIG.FONT_FAMILY,
-      fontSize: UI_CONFIG.MENU_FONT_SIZE,
-      color: '#00ff00'
-    });
-    startButton.setOrigin(0.5);
-    startButton.setInteractive({ useHandCursor: true });
-
-    // Blinking effect
-    this.tweens.add({
-      targets: startButton,
-      alpha: 0.3,
-      duration: 500,
-      yoyo: true,
-      repeat: -1
-    });
+    createMenuButton(
+      this,
+      width / 2,
+      (height * 2) / 3,
+      'TAP TO START',
+      () => this.scene.start('GameScene', { level: '1-3' }),
+      {
+        fontFamily: UI_CONFIG.FONT_FAMILY,
+        fontSize: UI_CONFIG.MENU_FONT_SIZE,
+        color: '#00ff00',
+        blink: true
+      }
+    );
 
     // Test mode button
-    const testModeButton = this.add.text(width / 2, height * 2 / 3 + 50, 'TEST MODE', {
-      fontFamily: UI_CONFIG.FONT_FAMILY,
-      fontSize: '20px',
-      color: '#ff9900'
-    });
-    testModeButton.setOrigin(0.5);
-    testModeButton.setInteractive({ useHandCursor: true });
-
-    testModeButton.on('pointerover', () => {
-      testModeButton.setColor('#ffcc00');
-    });
-
-    testModeButton.on('pointerout', () => {
-      testModeButton.setColor('#ff9900');
-    });
-
-    testModeButton.on('pointerdown', () => {
-      this.scene.start('GameScene', { testMode: true });
-    });
+    createMenuButton(
+      this,
+      width / 2,
+      (height * 2) / 3 + 50,
+      'TEST MODE',
+      () => this.scene.start('GameScene', { testMode: true }),
+      {
+        fontFamily: UI_CONFIG.FONT_FAMILY,
+        fontSize: '20px',
+        color: '#ff9900',
+        baseColor: '#ff9900',
+        hoverColor: '#ffcc00'
+      }
+    );
 
     // Controls text
     const controlsText = this.add.text(
@@ -104,49 +98,15 @@ export class MainMenuScene extends Phaser.Scene {
     );
     controlsText.setOrigin(0.5);
 
-    // Click/tap to start
-    startButton.on('pointerdown', () => {
-      this.scene.start('GameScene', {level: "1-3"});
-    });
-
     // Also allow spacebar to start
     if (this.input.keyboard) {
       this.input.keyboard.once('keydown-SPACE', () => {
-        this.scene.start('GameScene', {level: "1-1"});
+        this.scene.start('GameScene', { level: '1-1' });
       });
     }
   }
 
   update(): void {
-    // Scroll the starfield
-    if (this.stars) {
-      this.stars.tilePositionY -= 1;
-    }
-  }
-
-  private createStarfield(): void {
-    // Create a simple starfield using tile sprite
-    const width = this.cameras.main.width;
-    const height = this.cameras.main.height;
-
-    // Create a graphics object to generate star texture
-    const graphics = this.add.graphics();
-    graphics.fillStyle(0xffffff);
-
-    // Draw random stars
-    for (let i = 0; i < 100; i++) {
-      const x = Phaser.Math.Between(0, width);
-      const y = Phaser.Math.Between(0, height);
-      const size = Phaser.Math.Between(1, 2);
-      graphics.fillCircle(x, y, size);
-    }
-
-    graphics.generateTexture('starfield', width, height);
-    graphics.destroy();
-
-    // Create tile sprite for scrolling effect
-    this.stars = this.add.tileSprite(0, 0, width, height, 'starfield');
-    this.stars.setOrigin(0, 0);
-    this.stars.setDepth(-1);
+    this.stars?.update();
   }
 }

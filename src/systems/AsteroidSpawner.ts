@@ -1,136 +1,66 @@
 import Phaser from 'phaser';
 import { Asteroid, AsteroidSize } from '../entities/Asteroid';
 import { GameScene } from '@/scenes/GameScene';
+import { BaseSpawner } from './BaseSpawner';
 
-export class AsteroidSpawner {
-  private scene: GameScene;
-  private asteroids!: Phaser.Physics.Arcade.Group;
-  private spawnTimer?: Phaser.Time.TimerEvent;
-  private spawnDelay: number;
-  private minSpawnDelay: number;
-  private spawnDifficultyIncrease: number;
-
+export class AsteroidSpawner extends BaseSpawner {
   constructor(scene: GameScene) {
-    this.scene = scene;
     const config = scene.levelConfig.getAsteroidConfig();
-    this.spawnDelay = config.INITIAL_SPAWN_DELAY;
-    this.minSpawnDelay = config.MIN_SPAWN_DELAY;
-    this.spawnDifficultyIncrease = config.SPAWN_DIFFICULTY_INCREASE;
-
-    this.initAsteroidGroup();
+    super(
+      scene,
+      {
+        initial: config.INITIAL_SPAWN_DELAY,
+        min: config.MIN_SPAWN_DELAY,
+        increase: config.SPAWN_DIFFICULTY_INCREASE
+      },
+      { classType: Asteroid, maxSize: 15, runChildUpdate: true }
+    );
     this.startSpawning();
   }
 
-  private initAsteroidGroup(): void {
-    this.asteroids = this.scene.physics.add.group({
-      classType: Asteroid,
-      maxSize: 15,
-      runChildUpdate: true
-    });
+  protected doSpawn(): void {
+    const size = AsteroidSpawner.randomSize();
+    const { x, y } = this.randomEdgePosition();
+    this.spawnSized(x, y, size);
   }
 
-  private startSpawning(): void {
-    this.spawnTimer = this.scene.time.addEvent({
-      delay: this.spawnDelay,
-      callback: this.spawnAsteroid,
-      callbackScope: this,
-      loop: true
-    });
-  }
-
-  private spawnAsteroid(): void {
-    // Random size selection (weighted towards smaller asteroids)
-    const sizeRoll = Phaser.Math.Between(1, 100);
-    let size: AsteroidSize;
-    if (sizeRoll <= 50) {
-      size = 'small';
-    } else if (sizeRoll <= 85) {
-      size = 'medium';
-    } else {
-      size = 'large';
-    }
-
-    // Spawn from random edge of screen
-    const edge = Phaser.Math.Between(0, 3);
-    let x: number, y: number;
-    const margin = 50;
-    const width = this.scene.cameras.main.width;
-    const height = this.scene.cameras.main.height;
-
-    switch (edge) {
-      case 0: // Top
-        x = Phaser.Math.Between(margin, width - margin);
-        y = -margin;
-        break;
-      case 1: // Right
-        x = width + margin;
-        y = Phaser.Math.Between(margin, height - margin);
-        break;
-      case 2: // Bottom
-        x = Phaser.Math.Between(margin, width - margin);
-        y = height + margin;
-        break;
-      case 3: // Left
-      default:
-        x = -margin;
-        y = Phaser.Math.Between(margin, height - margin);
-        break;
-    }
-
-    const asteroid = this.asteroids.get(x, y, size) as Asteroid;
-
-    if (asteroid) {
-      asteroid.spawn(x, y, size);
-    }
+  protected spawnAt(x: number, y: number): void {
+    this.spawnSized(x, y, AsteroidSpawner.randomSize());
   }
 
   spawnSingle(): void {
-    // Random size for manual spawn
-    const sizeRoll = Phaser.Math.Between(1, 100);
-    let size: AsteroidSize;
-    if (sizeRoll <= 50) {
-      size = 'small';
-    } else if (sizeRoll <= 85) {
-      size = 'medium';
-    } else {
-      size = 'large';
-    }
-
-    // Spawn at center top of screen
-    const x = this.scene.cameras.main.width / 2;
-    const y = -50;
-
-    const asteroid = this.asteroids.get(x, y, size) as Asteroid;
-
-    if (asteroid) {
-      asteroid.spawn(x, y, size);
-    }
+    this.spawnAt(this.scene.cameras.main.width / 2, -50);
   }
 
-  increaseDifficulty(): void {
-    if (this.spawnDelay > this.minSpawnDelay) {
-      this.spawnDelay -= this.spawnDifficultyIncrease;
-      this.spawnDelay = Math.max(this.spawnDelay, this.minSpawnDelay);
-
-      if (this.spawnTimer) {
-        this.spawnTimer.destroy();
-        this.startSpawning();
-      }
-    }
+  private spawnSized(x: number, y: number, size: AsteroidSize): void {
+    const asteroid = this.group.get(x, y, size) as Asteroid;
+    if (asteroid) asteroid.spawn(x, y, size);
   }
 
-  stopSpawning(): void {
-    if (this.spawnTimer) {
-      this.spawnTimer.destroy();
-    }
+  private static randomSize(): AsteroidSize {
+    const roll = Phaser.Math.Between(1, 100);
+    if (roll <= 50) return 'small';
+    if (roll <= 85) return 'medium';
+    return 'large';
   }
 
-  destroyAll(): void {
-    this.stopSpawning();
-    this.asteroids.clear(true, true);
+  private randomEdgePosition(): { x: number; y: number } {
+    const margin = 50;
+    const width = this.scene.cameras.main.width;
+    const height = this.scene.cameras.main.height;
+    switch (Phaser.Math.Between(0, 3)) {
+      case 0:
+        return { x: Phaser.Math.Between(margin, width - margin), y: -margin };
+      case 1:
+        return { x: width + margin, y: Phaser.Math.Between(margin, height - margin) };
+      case 2:
+        return { x: Phaser.Math.Between(margin, width - margin), y: height + margin };
+      default:
+        return { x: -margin, y: Phaser.Math.Between(margin, height - margin) };
+    }
   }
 
   getAsteroids(): Phaser.Physics.Arcade.Group {
-    return this.asteroids;
+    return this.group;
   }
 }

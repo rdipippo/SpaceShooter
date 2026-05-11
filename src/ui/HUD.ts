@@ -14,6 +14,9 @@ export class HUD {
   private pauseGameText!: Phaser.GameObjects.Text;
   private resetGameText!: Phaser.GameObjects.Text;
   private victoryText!: Phaser.GameObjects.Text;
+  private killPctText!: Phaser.GameObjects.Text;
+  private originalScoreText!: Phaser.GameObjects.Text;
+  private modifiedScoreText!: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -25,8 +28,27 @@ export class HUD {
     this.resetGameText.setVisible(paused);
   }
 
-  public victory(): void {
+  public victory(killPct: number, originalScore: number, modifiedScore: number): void {
     this.victoryText.setVisible(true);
+    this.victoryText.setDepth(200);
+    const targetY = Math.floor(this.scene.cameras.main.height * 0.12);
+
+    this.scene.tweens.add({
+      targets: this.victoryText,
+      y: targetY,
+      duration: 1000,
+      ease: 'Power2',
+      onComplete: () => {
+        this.killPctText.setText(`${killPct}% of enemies destroyed`);
+        this.killPctText.setVisible(true);
+
+        this.originalScoreText.setText(`Score: $${originalScore}`);
+        this.originalScoreText.setVisible(true);
+
+        this.modifiedScoreText.setText(`Bonus Score: $${modifiedScore}`);
+        this.modifiedScoreText.setVisible(true);
+      }
+    });
   }
 
   public fadeToBlackKeepVictory(durationMs: number = 1500): void {
@@ -110,6 +132,19 @@ export class HUD {
     this.victoryText.setOrigin(0.5);
     this.victoryText.setScrollFactor(0);
     this.victoryText.setDepth(100);
+
+    const statsFontSize = Math.min(28, Math.floor(width / 18));
+    this.killPctText = this.scene.add.text(width / 2, height * 0.38, '', {
+      fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: `${statsFontSize}px`, color: '#ffff00'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(200).setVisible(false);
+
+    this.originalScoreText = this.scene.add.text(width / 2, height * 0.52, '', {
+      fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: `${statsFontSize}px`, color: '#ffffff'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(200).setVisible(false);
+
+    this.modifiedScoreText = this.scene.add.text(width / 2, height * 0.62, '', {
+      fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: `${statsFontSize}px`, color: '#00ff88'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(200).setVisible(false);
   }
 
   updateScore(score: number): void {
@@ -150,5 +185,8 @@ export class HUD {
     this.healthBar.destroy();
     this.pauseGameText.destroy();
     this.resetGameText.destroy();
+    this.killPctText.destroy();
+    this.originalScoreText.destroy();
+    this.modifiedScoreText.destroy();
   }
 }

@@ -27,6 +27,7 @@ export class GameScene extends Phaser.Scene {
   private collisionManager!: CollisionManager;
   private hud!: HUD;
   private gameOver: boolean = false;
+  private totalEnemiesDestroyed: number = 0;
   private stars: Starfield | null = null;
   private paused: boolean = false;
   private testMode: boolean = false;
@@ -150,10 +151,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleEnemyDestroyed(scoreValue: number): void {
+    this.totalEnemiesDestroyed++;
     this.addScoreAndCheckDifficulty(scoreValue);
   }
 
   private handleAsteroidDestroyed(scoreValue: number): void {
+    this.totalEnemiesDestroyed++;
     this.addScoreAndCheckDifficulty(scoreValue);
   }
 
@@ -165,7 +168,17 @@ export class GameScene extends Phaser.Scene {
     this.physics.pause();
 
     this.events.emit('gamePaused');
-    this.hud.victory();
+
+    const totalSpawned = this.enemySpawner.getTotalSpawned()
+      + (this.strikerSpawner?.getTotalSpawned() ?? 0)
+      + this.asteroidSpawner.getTotalSpawned();
+    const killPct = totalSpawned > 0
+      ? Math.round((this.totalEnemiesDestroyed / totalSpawned) * 100)
+      : 0;
+    const originalScore = this.scoreManager.getCurrentScore();
+    const modifiedScore = Math.round(originalScore * (1 + killPct / 100));
+
+    this.hud.victory(killPct, originalScore, modifiedScore);
 
     window.setTimeout(() => {
       if (this.scene.isActive()) {

@@ -34,7 +34,10 @@ export class AsteroidSpawner extends BaseSpawner {
 
   private spawnSized(x: number, y: number, size: AsteroidSize): void {
     const asteroid = this.group.get(x, y, size) as Asteroid;
-    if (asteroid) asteroid.spawn(x, y, size);
+    if (asteroid) {
+      this.spawnCount++;
+      asteroid.spawn(x, y, size);
+    }
   }
 
   private static randomSize(): AsteroidSize {

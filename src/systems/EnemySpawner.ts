@@ -37,6 +37,7 @@ export class EnemySpawner extends BaseSpawner {
   protected spawnAt(x: number, y: number): void {
     const enemy = this.group.get(x, y, 'enemy_basic') as Enemy;
     if (enemy) {
+      this.spawnCount++;
       enemy.spawn(x, y);
       if (this.player) {
         enemy.setShootingTargets(this.player, this.enemyBullets);

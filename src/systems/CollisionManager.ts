@@ -166,8 +166,11 @@ export class CollisionManager {
   /** Bullet hits a damageable target — deactivate bullet, damage target, emit event on kill. */
   private bulletVsTarget(eventName: string): ArcadeCallback {
     return (a, b) => {
-      const bullet = a as ArcadeBullet;
-      const target = b as DamageableTarget;
+      // Phaser swaps callback args when overlapping a group vs a single sprite,
+      // so detect which object is the target by checking for takeDamage.
+      const [bullet, target] = 'takeDamage' in (a as object)
+        ? [b as ArcadeBullet, a as DamageableTarget]
+        : [a as ArcadeBullet, b as DamageableTarget];
       if (!bullet.active || !target.active) return;
       bullet.setActive(false);
       bullet.setVisible(false);

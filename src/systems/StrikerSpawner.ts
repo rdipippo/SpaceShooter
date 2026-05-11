@@ -37,6 +37,7 @@ export class StrikerSpawner extends BaseSpawner {
   protected spawnAt(x: number, y: number): void {
     const striker = this.group.get(x, y, 'enemy_striker') as StrikerEnemy;
     if (striker) {
+      this.spawnCount++;
       striker.spawn(x, y);
       if (this.player) {
         striker.setShootingTargets(this.player, this.strikerBullets);

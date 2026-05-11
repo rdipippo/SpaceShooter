@@ -14,6 +14,7 @@ export abstract class BaseSpawner {
   protected spawnDelay: number;
   protected minSpawnDelay: number;
   protected spawnDifficultyIncrease: number;
+  protected spawnCount: number = 0;
 
   constructor(
     scene: GameScene,
@@ -70,6 +71,10 @@ export abstract class BaseSpawner {
 
   getSpawnDelay(): number {
     return this.spawnDelay;
+  }
+
+  getTotalSpawned(): number {
+    return this.spawnCount;
   }
 
   /** Test mode: spawn at center-top. */

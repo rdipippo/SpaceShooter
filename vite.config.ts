@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: './',
+  base: process.env.GITHUB_ACTIONS === 'true' ? '/SpaceShooter/' : './',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

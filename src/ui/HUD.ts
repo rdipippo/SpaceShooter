@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { PLAYER_CONFIG, UI_CONFIG } from '../utils/Constants';
+import { ShieldUpgradeManager } from '../systems/ShieldUpgradeManager';
+import { ScoreManager } from '../systems/ScoreManager';
 
 export class HUD {
   private scene: Phaser.Scene;
@@ -17,6 +19,10 @@ export class HUD {
   private killPctText!: Phaser.GameObjects.Text;
   private originalScoreText!: Phaser.GameObjects.Text;
   private modifiedScoreText!: Phaser.GameObjects.Text;
+  private shopHeaderText!: Phaser.GameObjects.Text;
+  private shopUpgradeInfoText!: Phaser.GameObjects.Text;
+  private shopBuyButton!: Phaser.GameObjects.Text;
+  private shopContinueButton!: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -51,7 +57,7 @@ export class HUD {
     });
   }
 
-  public fadeToBlackKeepVictory(durationMs: number = 1500): void {
+  public fadeToBlackKeepVictory(durationMs: number = 1500, onComplete?: () => void): void {
     const width = this.scene.cameras.main.width;
     const height = this.scene.cameras.main.height;
 
@@ -66,8 +72,52 @@ export class HUD {
       targets: overlay,
       alpha: 1,
       duration: durationMs,
-      ease: 'Power2'
+      ease: 'Power2',
+      onComplete: onComplete ? () => onComplete() : undefined
     });
+  }
+
+  public showVictoryShop(
+    upgradeManager: ShieldUpgradeManager,
+    scoreManager: ScoreManager,
+    onContinue: () => void
+  ): void {
+    const updateShopUI = () => {
+      const count = upgradeManager.getUpgradeCount();
+      const pct = Math.round(count * 10);
+      const price = upgradeManager.getNextPrice();
+      const balance = scoreManager.getCurrentScore();
+      const canAfford = balance >= price;
+
+      this.shopUpgradeInfoText.setText(
+        count === 0
+          ? 'No upgrades active'
+          : `${count} upgrade${count > 1 ? 's' : ''} active — ${pct}% damage reduction`
+      );
+
+      this.shopBuyButton.setText(`Buy Shield Upgrade — $${price}`);
+      this.shopBuyButton.setColor(canAfford ? '#00ff88' : '#555555');
+      this.shopBuyButton.setInteractive(canAfford ? { useHandCursor: true } : {});
+    };
+
+    updateShopUI();
+
+    [this.shopHeaderText, this.shopUpgradeInfoText, this.shopBuyButton, this.shopContinueButton].forEach(el => {
+      el.setAlpha(0);
+      el.setVisible(true);
+      this.scene.tweens.add({ targets: el, alpha: 1, duration: 400, ease: 'Power1' });
+    });
+
+    this.shopBuyButton.on('pointerdown', () => {
+      const price = upgradeManager.getNextPrice();
+      if (scoreManager.spendScore(price)) {
+        void upgradeManager.purchaseUpgrade();
+        this.updateScore(scoreManager.getCurrentScore());
+        updateShopUI();
+      }
+    });
+
+    this.shopContinueButton.on('pointerdown', onContinue);
   }
 
   private createUI(): void {
@@ -145,6 +195,24 @@ export class HUD {
     this.modifiedScoreText = this.scene.add.text(width / 2, height * 0.62, '', {
       fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: `${statsFontSize}px`, color: '#00ff88'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(200).setVisible(false);
+
+    const shopFontSize = Math.min(22, Math.floor(width / 20));
+    this.shopHeaderText = this.scene.add.text(width / 2, height * 0.70, 'SHIELD UPGRADES', {
+      fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: `${shopFontSize + 4}px`, color: '#00ffff'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(200).setVisible(false);
+
+    this.shopUpgradeInfoText = this.scene.add.text(width / 2, height * 0.78, '', {
+      fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: `${shopFontSize}px`, color: '#ffffff'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(200).setVisible(false);
+
+    this.shopBuyButton = this.scene.add.text(width / 2, height * 0.86, '', {
+      fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: `${shopFontSize}px`, color: '#00ff88'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(200).setVisible(false);
+
+    this.shopContinueButton = this.scene.add.text(width / 2, height * 0.93, 'CONTINUE →', {
+      fontFamily: UI_CONFIG.FONT_FAMILY, fontSize: `${shopFontSize}px`, color: '#ffff00'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(200).setVisible(false)
+      .setInteractive({ useHandCursor: true });
   }
 
   updateScore(score: number): void {
@@ -188,5 +256,9 @@ export class HUD {
     this.killPctText.destroy();
     this.originalScoreText.destroy();
     this.modifiedScoreText.destroy();
+    this.shopHeaderText.destroy();
+    this.shopUpgradeInfoText.destroy();
+    this.shopBuyButton.destroy();
+    this.shopContinueButton.destroy();
   }
 }

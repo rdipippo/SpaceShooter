@@ -7,7 +7,7 @@ import Phaser from 'phaser';
 export function tick(scene: Phaser.Scene, ms: number, stepMs = 16): void {
   const sys = scene.sys;
   let elapsed = 0;
-  let now = sys.time.now;
+  let now = scene.time.now;
   while (elapsed < ms) {
     const delta = Math.min(stepMs, ms - elapsed);
     now += delta;

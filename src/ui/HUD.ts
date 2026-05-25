@@ -117,7 +117,8 @@ export class HUD {
       }
     });
 
-    this.shopContinueButton.on('pointerdown', onContinue);
+    this.shopContinueButton.setInteractive({ useHandCursor: true });
+    this.shopContinueButton.once('pointerdown', onContinue);
   }
 
   private createUI(): void {

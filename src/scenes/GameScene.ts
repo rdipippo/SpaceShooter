@@ -7,6 +7,7 @@ import { BossSpawner } from '../systems/BossSpawner';
 import { StrikerSpawner } from '../systems/StrikerSpawner';
 import { CollisionManager } from '../systems/CollisionManager';
 import { ScoreManager } from '../systems/ScoreManager';
+import { ShieldUpgradeManager } from '../systems/ShieldUpgradeManager';
 import { HUD } from '../ui/HUD';
 import { TestUI } from '@/ui/TestUI';
 import { LevelConfig, LevelConfigData } from '@/utils/LevelConfig';
@@ -24,6 +25,7 @@ export class GameScene extends Phaser.Scene {
 
   private level: string = "1-1";
   private scoreManager!: ScoreManager;
+  private shieldUpgradeManager!: ShieldUpgradeManager;
   private collisionManager!: CollisionManager;
   private hud!: HUD;
   private gameOver: boolean = false;
@@ -93,6 +95,12 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.width / 2,
       this.cameras.main.height - 100
     );
+
+    // Load persistent shield upgrades and apply damage mitigation to player
+    this.shieldUpgradeManager = new ShieldUpgradeManager();
+    this.shieldUpgradeManager.ready.then(() => {
+      this.player.setDamageMitigation(this.shieldUpgradeManager.getDamageMitigation());
+    });
 
     // Create enemy spawner and set player reference for enemy shooting
     this.enemySpawner = new EnemySpawner(this);
@@ -177,14 +185,27 @@ export class GameScene extends Phaser.Scene {
       : 0;
     const originalScore = this.scoreManager.getCurrentScore();
     const modifiedScore = Math.round(originalScore * (1 + killPct / 100));
+    this.scoreManager.addScore(modifiedScore - originalScore);
+    this.hud.updateScore(this.scoreManager.getCurrentScore());
 
     this.hud.victory(killPct, originalScore, modifiedScore);
 
     window.setTimeout(() => {
       if (this.scene.isActive()) {
-        this.hud.fadeToBlackKeepVictory();
+        this.hud.fadeToBlackKeepVictory(1500, () => {
+          this.hud.showVictoryShop(
+            this.shieldUpgradeManager,
+            this.scoreManager,
+            () => {
+              this.scene.start('GameOverScene', {
+                score: this.scoreManager.getCurrentScore(),
+                highScore: this.scoreManager.getHighScore()
+              });
+            }
+          );
+        });
       }
-    }, 5000);
+    }, 3000);
   }
 
   private addScoreAndCheckDifficulty(scoreValue: number): void {

@@ -22,6 +22,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   };
   private isInvulnerable: boolean = false; // for after taking damage
   private isInvincible: boolean = false; // for test mode - can it be merged with isInvulnerable?
+  private damageMitigation: number = 0;
   private touchActive: boolean = false;
   private gamePaused: boolean = false;
   private touchStartPosition: Phaser.Math.Vector2 | null = null;
@@ -235,10 +236,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  setDamageMitigation(value: number): void {
+    this.damageMitigation = value;
+  }
+
   takeDamage(amount: number): void {
     if (this.isInvulnerable || this.isInvincible) return;
 
-    this.health -= amount;
+    this.health -= amount * (1 - this.damageMitigation);
 
     this.createExplosion();
 

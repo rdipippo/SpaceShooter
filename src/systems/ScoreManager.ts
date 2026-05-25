@@ -35,6 +35,12 @@ export class ScoreManager {
     this.currentScore = 0;
   }
 
+  spendScore(amount: number): boolean {
+    if (this.currentScore < amount) return false;
+    this.currentScore -= amount;
+    return true;
+  }
+
   private async loadHighScore(): Promise<void> {
     try {
       const { value } = await Preferences.get({ key: this.HIGH_SCORE_KEY });

@@ -10,7 +10,7 @@ import { ScoreManager } from '../systems/ScoreManager';
 import { ShieldUpgradeManager } from '../systems/ShieldUpgradeManager';
 import { HUD } from '../ui/HUD';
 import { TestUI } from '@/ui/TestUI';
-import { LevelConfig, LevelConfigData } from '@/utils/LevelConfig';
+import { LevelConfig, LevelConfigData, getNextLevel, levelExists } from '@/utils/LevelConfig';
 import { bindSceneEvents, unbindSceneEvents, SceneEventMap } from '@/utils/SceneEvents';
 import { Starfield } from '@/ui/Starfield';
 
@@ -24,6 +24,7 @@ export class GameScene extends Phaser.Scene {
   public levelConfig!: LevelConfig;
 
   private level: string = "1-1";
+  private carryScore: number = 0;
   private scoreManager!: ScoreManager;
   private shieldUpgradeManager!: ShieldUpgradeManager;
   private collisionManager!: CollisionManager;
@@ -39,9 +40,10 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
-  init(data: { testMode?: boolean, level?: string }): void {
+  init(data: { testMode?: boolean, level?: string, carryScore?: number }): void {
     this.testMode = data.testMode || false;
     this.level = data.level || "1-1";
+    this.carryScore = data.carryScore && data.carryScore > 0 ? data.carryScore : 0;
   }
 
   preload(): void {
@@ -88,6 +90,10 @@ export class GameScene extends Phaser.Scene {
 
     // Initialize score manager
     this.scoreManager = new ScoreManager();
+    if (this.carryScore > 0) {
+      this.scoreManager.addScore(this.carryScore);
+      this.carryScore = 0;
+    }
 
     // Create player
     this.player = new Player(
@@ -197,15 +203,31 @@ export class GameScene extends Phaser.Scene {
             this.shieldUpgradeManager,
             this.scoreManager,
             () => {
-              this.scene.start('GameOverScene', {
-                score: this.scoreManager.getCurrentScore(),
-                highScore: this.scoreManager.getHighScore()
-              });
+              void this.advanceToNextLevel();
             }
           );
         });
       }
     }, 3000);
+  }
+
+  private async advanceToNextLevel(): Promise<void> {
+    if (!this.scene.isActive()) return;
+
+    const nextLevel = getNextLevel(this.level);
+    const carryScore = this.scoreManager.getCurrentScore();
+    const highScore = this.scoreManager.getHighScore();
+
+    if (nextLevel && await levelExists(nextLevel)) {
+      this.scene.start('GameScene', { level: nextLevel, carryScore });
+    } else {
+      // No further level config exists — the player has beaten the game.
+      this.scene.start('GameOverScene', {
+        score: carryScore,
+        highScore,
+        gameWon: true,
+      });
+    }
   }
 
   private addScoreAndCheckDifficulty(scoreValue: number): void {

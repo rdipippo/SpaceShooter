@@ -93,6 +93,40 @@ export interface LevelConfigData {
     BOSS_CONFIG: BossConfig;
 }
 
+/**
+ * Compute the next level ID from a "W-L" string.
+ * Within a world, levels run 1..10; after W-10, advance to (W+1)-1.
+ * Returns null if the input is malformed.
+ */
+export function getNextLevel(level: string): string | null {
+    const match = /^(\d+)-(\d+)$/.exec(level);
+    if (!match) return null;
+    const world = parseInt(match[1], 10);
+    const num = parseInt(match[2], 10);
+    if (!Number.isFinite(world) || !Number.isFinite(num) || world < 1 || num < 1) return null;
+    if (num < 10) return `${world}-${num + 1}`;
+    return `${world + 1}-1`;
+}
+
+/**
+ * Probe whether a level config file exists at config/levels/<level>.json.
+ * Used to detect "no more levels → player has beaten the game".
+ *
+ * Note: dev servers (Vite) and SPA hosts often return the index.html fallback
+ * with status 200 for missing files, so we additionally check the response
+ * content-type to ensure we're actually getting JSON.
+ */
+export async function levelExists(level: string): Promise<boolean> {
+    try {
+        const res = await fetch(`config/levels/${level}.json`, { method: 'HEAD' });
+        if (!res.ok) return false;
+        const ct = res.headers.get('content-type') ?? '';
+        return ct.toLowerCase().includes('json');
+    } catch {
+        return false;
+    }
+}
+
 export class LevelConfig {
     private level: string;
     private config: LevelConfigData;

@@ -136,8 +136,9 @@ export class GameScene extends Phaser.Scene {
 
     // Create HUD
     this.hud = new HUD(this);
-    this.hud.updateScore(0);
+    this.hud.updateScore(this.scoreManager.getCurrentScore());
     this.hud.updateHealth(this.player.getHealth());
+    this.hud.updateLevel(this.level);
 
     bindSceneEvents(this, this, this.eventMap);
 
@@ -177,6 +178,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleBossDestroyed(scoreValue: number): void {
+    this.totalEnemiesDestroyed++;
+
     this.addScoreAndCheckDifficulty(scoreValue);
     this.paused = true;
     this.physics.pause();
@@ -221,7 +224,7 @@ export class GameScene extends Phaser.Scene {
     const highScore = this.scoreManager.getHighScore();
 
     if (nextLevel && await levelExists(nextLevel)) {
-      this.scene.start('GameScene', { level: nextLevel, carryScore });
+      this.scene.start('GameScene', { level: nextLevel, carryScore: carryScore });
     } else {
       // No further level config exists — the player has beaten the game.
       this.scene.start('GameOverScene', {

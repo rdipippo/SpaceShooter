@@ -60,7 +60,7 @@ export class MainMenuScene extends Phaser.Scene {
       width / 2,
       (height * 2) / 3,
       'TAP TO START',
-      () => this.scene.start('GameScene', { level: '1-3' }),
+      () => this.scene.start('GameScene', { level: '1-1' }),
       {
         fontFamily: UI_CONFIG.FONT_FAMILY,
         fontSize: UI_CONFIG.MENU_FONT_SIZE,

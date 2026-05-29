@@ -6,8 +6,10 @@ import { ScoreManager } from '../systems/ScoreManager';
 export class HUD {
   private scene: Phaser.Scene;
   private scoreText!: Phaser.GameObjects.Text;
+  private levelText!: Phaser.GameObjects.Text;
   private healthLabel!: Phaser.GameObjects.Text;
   private healthBar!: Phaser.GameObjects.Graphics;
+  private currentLevel: number;
   private currentHealth: number = PLAYER_CONFIG.MAX_HEALTH;
   private static readonly HEALTH_BAR_X = 100;
   private static readonly HEALTH_BAR_Y = 56;
@@ -136,6 +138,12 @@ export class HUD {
       color: '#ffffff'
     });
 
+    this.levelText= this.scene.add.text(16, 84, '$0', {
+      fontFamily: UI_CONFIG.FONT_FAMILY,
+      fontSize: UI_CONFIG.SCORE_FONT_SIZE,
+      color: '#ffffff'
+    });
+
     const pauseFontSize = Math.min(64, Math.floor(width / 8));
     this.pauseGameText = this.scene.add.text(
       width / 2, height / 2 - 60, 'Game Paused',
@@ -162,7 +170,10 @@ export class HUD {
 
     this.scoreText.setScrollFactor(0);
     this.scoreText.setDepth(100);
-
+    
+    this.levelText.setScrollFactor(0);
+    this.levelText.setDepth(100);
+    
     // Health label and neon green health bar (below score)
     this.healthLabel = this.scene.add.text(16, 50, 'Health:', {
       fontFamily: UI_CONFIG.FONT_FAMILY,
@@ -229,6 +240,11 @@ export class HUD {
     this.drawHealthBar();
   }
 
+  updateLevel(level: string): void {
+    this.currentLevel = level;
+    this.levelText.setText('Level: ' + level);
+  }
+
   private drawHealthBar(): void {
     const x = HUD.HEALTH_BAR_X;
     const y = HUD.HEALTH_BAR_Y;
@@ -254,6 +270,7 @@ export class HUD {
 
   destroy(): void {
     this.scoreText.destroy();
+    this.levelText.destroy();
     this.healthLabel.destroy();
     this.healthBar.destroy();
     this.pauseGameText.destroy();

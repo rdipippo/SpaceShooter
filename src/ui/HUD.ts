@@ -97,7 +97,11 @@ export class HUD {
 
       this.shopBuyButton.setText(`Buy Shield Upgrade — $${price}`);
       this.shopBuyButton.setColor(canAfford ? '#00ff88' : '#555555');
-      this.shopBuyButton.setInteractive(canAfford ? { useHandCursor: true } : {});
+      if (canAfford) {
+        this.shopBuyButton.setInteractive({ useHandCursor: true });
+      } else {
+        this.shopBuyButton.disableInteractive();
+      }
     };
 
     updateShopUI();

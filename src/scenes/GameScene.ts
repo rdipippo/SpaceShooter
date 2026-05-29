@@ -55,6 +55,8 @@ export class GameScene extends Phaser.Scene {
     this.levelConfig = new LevelConfig(this.level, configData);
     this.gameOver = false;
     this.paused = false;
+    this.time.paused = false;
+    this.physics.resume();
 
     this.eventMap = {
       enemyDestroyed: this.handleEnemyDestroyed,
